@@ -4,7 +4,9 @@ use crate::{
     },
     domain::{
         entities::user::User,
-        errors::{cripto_error::CriptoError, domain_error::DomainError, user_error::UserError},
+        errors::{
+            domain_error::DomainError, permission_error::PermissionError, user_error::UserError,
+        },
         repositories::user_repository::UserRepository,
         services::{cripto::CriptoService, jwt::JwtProvider},
         value_objects::email_vo::Email,
@@ -39,13 +41,17 @@ impl LoginUser {
             .user_repo
             .get_user_by_email(user_data.email.as_str())
             .await
-            .map_err(|_| DomainError::Cripto(CriptoError::InvalidCredentials))?;
+            .map_err(|_| DomainError::Permisson(PermissionError::Unauthorized))?;
 
+        if user.deleted_at.is_some() {
+            return Err(DomainError::Permisson(PermissionError::Unauthorized));
+        }
+        
         if !(self
             .cripto_service
             .verify(&user_data.password, &user.password))?
         {
-            return Err(DomainError::Cripto(CriptoError::InvalidCredentials));
+            return Err(DomainError::Permisson(PermissionError::Unauthorized));
         }
 
         let access = self
@@ -54,7 +60,7 @@ impl LoginUser {
         let refresh = self.jwt_service.generate_refresh(user.id.to_string())?;
 
         let response = AuthResponse {
-            user: UserResponse::to_reponse(user),
+            user: UserResponse::to_response(user),
             access,
             refresh,
         };
