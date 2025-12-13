@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axum = "0.7"
+axum = { version = "0.7", features = ["macros"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -26,3 +26,6 @@ thiserror = "1.0"
 regex = "1.12.2"
 argon2 = "0.5.3"
 rand = "0.8"
+lettre = "0.11.19"
+axum-extra = { version = "0.9", features = ["multipart"] }
+aws-sdk-s3 = "1.117.0"
