@@ -1,6 +1,10 @@
+pub mod bucket_error;
 pub mod cripto_error;
 pub mod domain_error;
+pub mod file_error;
 pub mod jwt_error;
+pub mod measurement_error;
+pub mod permission_error;
 pub mod repository_error;
 pub mod smtp_error;
 pub mod user_error;
