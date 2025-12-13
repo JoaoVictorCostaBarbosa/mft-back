@@ -1,5 +1,3 @@
-use std::env;
-
 use super::claims::{AccessClaims, RefreshClaims};
 use crate::domain::{
     auth::token_data::{AccessTokenData, RefreshTokenData},
@@ -13,24 +11,29 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode}
 pub struct JwtService {
     access_secret: String,
     refresh_secret: String,
+    access_minutes: i64,
+    refresh_days: i64,
 }
 
 impl JwtService {
-    pub fn new(access_secret: impl Into<String>, refresh_secret: impl Into<String>) -> Self {
+    pub fn new(
+        access_secret: impl Into<String>,
+        refresh_secret: impl Into<String>,
+        access_minutes: impl Into<i64>,
+        refresh_days: impl Into<i64>,
+    ) -> Self {
         Self {
             access_secret: access_secret.into(),
             refresh_secret: refresh_secret.into(),
+            access_minutes: access_minutes.into(),
+            refresh_days: refresh_days.into(),
         }
     }
 }
 
 impl JwtProvider for JwtService {
     fn generate_access(&self, user_id: String, role: Role) -> Result<String, JwtError> {
-        let minutes: i64 = (env::var("ACCESS_MINUTES").expect("ACCESS_MINUTES not set"))
-            .parse()
-            .expect("conversion failure");
-
-        let exp = (Utc::now() + Duration::minutes(minutes)).timestamp() as usize;
+        let exp = (Utc::now() + Duration::minutes(self.access_minutes)).timestamp() as usize;
 
         let claims = AccessClaims {
             sub: user_id,
@@ -47,11 +50,7 @@ impl JwtProvider for JwtService {
     }
 
     fn generate_refresh(&self, user_id: String) -> Result<String, JwtError> {
-        let days: i64 = (env::var("REFRESH_DAYS").expect("REFRESH_DAYS not set"))
-            .parse()
-            .expect("conversion failure");
-
-        let exp = (Utc::now() + Duration::days(days)).timestamp() as usize;
+        let exp = (Utc::now() + Duration::days(self.refresh_days)).timestamp() as usize;
 
         let claims = RefreshClaims { sub: user_id, exp };
 

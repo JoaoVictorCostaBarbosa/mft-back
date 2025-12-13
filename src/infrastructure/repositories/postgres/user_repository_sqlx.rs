@@ -1,13 +1,16 @@
 use crate::{
     domain::{
         entities::user::User,
-        errors::{domain_error::DomainError, user_error::UserError},
+        errors::{
+            domain_error::DomainError, repository_error::RepositoryError, user_error::UserError,
+        },
         repositories::user_repository::UserRepository,
+        value_objects::user_update::UserUpdateFilds,
     },
     infrastructure::repositories::{enums_db::role_db::RoleDb, models::user_model::UserModel},
 };
 use axum::async_trait;
-use chrono::{Local, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -104,100 +107,38 @@ impl UserRepository for UserRepositorySQLx {
         Ok(users)
     }
 
-    async fn update_user_name(&self, name: String, user_id: Uuid) -> Result<(), DomainError> {
-        let now: NaiveDateTime = Local::now().naive_local();
+    async fn update_user(&self, user: UserUpdateFilds, user_id: Uuid) -> Result<User, DomainError> {
+        let now: DateTime<Utc> = Utc::now();
 
-        sqlx::query(
+        let result = sqlx::query_as::<_, UserModel>(
             r#"
             UPDATE users
-            SET name = $1,
-                updated_at = $2
-            WHERE id = $3
+            SET name = COALESCE($1, name),
+                email = COALESCE($2, email),
+                password = COALESCE($3, password),
+                url_img = COALESCE($4, url_img),
+                updated_at = $5
+            WHERE id = $6
+            RETURNING *
             "#,
         )
-        .bind(name)
+        .bind(user.name)
+        .bind(user.email)
+        .bind(user.password)
+        .bind(user.url_img)
         .bind(now)
         .bind(user_id)
-        .execute(&self.pool)
+        .fetch_one(&self.pool)
         .await
         .map_err(DomainError::from)?;
 
-        Ok(())
-    }
+        let updated_user = result.to_domain()?;
 
-    async fn update_user_email(&self, email: String, user_id: Uuid) -> Result<(), DomainError> {
-        let now: NaiveDateTime = Local::now().naive_local();
-
-        sqlx::query(
-            r#"
-            UPDATE users
-            SET email = $1,
-                updated_at = $2
-            WHERE id = $3
-            "#,
-        )
-        .bind(email)
-        .bind(now)
-        .bind(user_id)
-        .execute(&self.pool)
-        .await
-        .map_err(DomainError::from)?;
-
-        Ok(())
-    }
-
-    async fn update_user_password(
-        &self,
-        password: String,
-        user_id: Uuid,
-    ) -> Result<(), DomainError> {
-        let now: NaiveDateTime = Local::now().naive_local();
-
-        sqlx::query(
-            r#"
-            UPDATE users
-            SET password = $1,
-                updated_at = $2
-            WHERE id = $3
-            "#,
-        )
-        .bind(password)
-        .bind(now)
-        .bind(user_id)
-        .execute(&self.pool)
-        .await
-        .map_err(DomainError::from)?;
-
-        Ok(())
-    }
-
-    async fn update_user_avatar(
-        &self,
-        avatar_url: String,
-        user_id: Uuid,
-    ) -> Result<(), DomainError> {
-        let now: NaiveDateTime = Local::now().naive_local();
-
-        sqlx::query(
-            r#"
-            UPDATE users
-            SET url_img = $1,
-                updated_at = $2
-            WHERE id = $3
-            "#,
-        )
-        .bind(avatar_url)
-        .bind(now)
-        .bind(user_id)
-        .execute(&self.pool)
-        .await
-        .map_err(DomainError::from)?;
-
-        Ok(())
+        Ok(updated_user)
     }
 
     async fn soft_delete_user(&self, user_id: Uuid) -> Result<(), DomainError> {
-        let now: NaiveDateTime = Local::now().naive_local();
+        let now: DateTime<Utc> = Utc::now();
 
         sqlx::query(
             r#"
@@ -217,10 +158,30 @@ impl UserRepository for UserRepositorySQLx {
         Ok(())
     }
 
-    async fn delete_user(&self, user_id: Uuid) -> Result<(), DomainError> {
+    async fn restore_user(&self, user_id: Uuid) -> Result<(), DomainError> {
+        let now: DateTime<Utc> = Utc::now();
+
         sqlx::query(
             r#"
-            DELETE users
+            UPDATE users
+            SET deleted_at = NULL,
+                updated_at = $1
+            WHERE id = $2
+            "#,
+        )
+        .bind(now)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await
+        .map_err(DomainError::from)?;
+
+        Ok(())
+    }
+
+    async fn delete_user(&self, user_id: Uuid) -> Result<(), DomainError> {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM users
             WHERE id = $1
             "#,
         )
@@ -228,6 +189,12 @@ impl UserRepository for UserRepositorySQLx {
         .execute(&self.pool)
         .await
         .map_err(DomainError::from)?;
+
+        if result.rows_affected() == 0 {
+            return Err(DomainError::Repository(RepositoryError::NotFound(
+                "User not found".to_string(),
+            )));
+        }
 
         Ok(())
     }

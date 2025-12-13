@@ -6,7 +6,7 @@ use crate::{
     },
     infrastructure::repositories::enums_db::role_db::RoleDb,
 };
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;
 
@@ -18,9 +18,9 @@ pub struct UserModel {
     pub password: String,
     pub role: RoleDb,
     pub url_img: Option<String>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: Option<NaiveDateTime>,
-    pub deleted_at: Option<NaiveDateTime>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: Option<DateTime<Utc>>,
+    pub deleted_at: Option<DateTime<Utc>>,
 }
 
 impl UserModel {
