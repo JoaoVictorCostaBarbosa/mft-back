@@ -1,2 +1,12 @@
 pub mod create_user;
+pub mod delete_user;
+pub mod find_users;
 pub mod login_user;
+pub mod restore_user;
+pub mod send_code;
+pub mod soft_delete_user;
+pub mod update_avatar;
+pub mod update_email;
+pub mod update_password;
+pub mod update_user;
+pub mod verify_user;

@@ -25,13 +25,13 @@ pub async fn login_user_handler(
 ) -> impl IntoResponse {
     let mapper = UserMappers;
 
-    match state
-        .auth
-        .login_user
-        .execute(mapper.to_login_request(user_data))
-        .await
-    {
-        Ok(user) => (StatusCode::OK, Json(mapper.to_auth_response_dto(user))).into_response(),
+    let data = mapper.to_login_request(user_data);
+
+    match state.auth.login_user.execute(data).await {
+        Ok(user) => {
+            let user_response = mapper.to_auth_response_dto(user);
+            (StatusCode::OK, Json(user_response)).into_response()
+        }
         Err(err) => err.into_response(),
     }
 }

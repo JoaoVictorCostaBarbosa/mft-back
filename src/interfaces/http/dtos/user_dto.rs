@@ -29,3 +29,30 @@ pub struct AuthResponseDTO {
     pub access: String,
     pub refresh: String,
 }
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VerifyRequestDTO {
+    pub email: String,
+    pub code: i32,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UpdateUserDTO {
+    pub id: Option<Uuid>,
+    pub name: Option<String>,
+    pub code: i32,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UpdateEmailDTO {
+    pub id: Option<Uuid>,
+    pub email: String,
+    pub code: i32,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UpdatePasswordDTO {
+    pub id: Option<Uuid>,
+    pub password: String,
+    pub code: i32,
+}

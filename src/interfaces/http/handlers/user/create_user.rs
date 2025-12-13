@@ -8,13 +8,14 @@ use axum::{
     http::status,
     response::IntoResponse,
 };
+use serde_json::json;
 
 #[utoipa::path{
     post,
     path = "/api/auth/register",
     request_body = CreateUserRequestDTO,
     responses(
-        (status = 201, description = "create user", body = AuthResponseDTO),
+        (status = 200, description = "code sent"),
         (status = 409, description = "email already used"),
         (status = 422, description = "unprocessable entity"),
         (status = 500, description = "internal server error"),
@@ -29,9 +30,9 @@ pub async fn create_user_handler(
     let user_create_dto = mapper.to_user_create_dto(user_data);
 
     match state.auth.create_user.execute(user_create_dto).await {
-        Ok(user) => (
-            status::StatusCode::CREATED,
-            Json(mapper.to_auth_response_dto(user)),
+        Ok(_) => (
+            status::StatusCode::OK,
+            Json(json!({ "message": "invited code" })),
         )
             .into_response(),
         Err(err) => err.into_response(),
