@@ -1,4 +1,4 @@
-use crate::interfaces::http::dtos::user_dto::{
+use crate::adapters::http::dtos::user_dto::{
     AuthResponseDTO, CreateUserRequestDTO, LoginRequestDTO, UpdateUserDTO, UserResponseDTO,
     VerifyRequestDTO,
 };
@@ -10,12 +10,12 @@ use utoipa::{
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        crate::interfaces::http::handlers::user::create_user::create_user_handler,
-        crate::interfaces::http::handlers::user::login_user::login_user_handler,
-        crate::interfaces::http::handlers::user::verify_user::verify_user_handler,
-        crate::interfaces::http::handlers::user::soft_delete_user::soft_delete_user_handler,
-        crate::interfaces::http::handlers::user::update_user::update_user_handler,
-        crate::interfaces::http::handlers::user::send_code::send_code_handler,
+        crate::adapters::http::handlers::user::create_user::create_user_handler,
+        crate::adapters::http::handlers::user::login_user::login_user_handler,
+        crate::adapters::http::handlers::user::verify_user::verify_user_handler,
+        crate::adapters::http::handlers::user::soft_delete_user::soft_delete_user_handler,
+        crate::adapters::http::handlers::user::update_user::update_user_handler,
+        crate::adapters::http::handlers::user::send_code::send_code_handler,
     ),
     components(
         schemas(
