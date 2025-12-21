@@ -4,4 +4,3 @@ pub mod body_weight_vo;
 pub mod email_vo;
 pub mod name_vo;
 pub mod password_vo;
-pub mod user_update;
