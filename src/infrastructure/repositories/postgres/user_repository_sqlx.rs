@@ -1,11 +1,11 @@
 use crate::{
     domain::{
+        commands::user_commands::UserUpdateFilds,
         entities::user::User,
         errors::{
             domain_error::DomainError, repository_error::RepositoryError, user_error::UserError,
         },
         repositories::user_repository::UserRepository,
-        value_objects::user_update::UserUpdateFilds,
     },
     infrastructure::repositories::{enums_db::role_db::RoleDb, models::user_model::UserModel},
 };
