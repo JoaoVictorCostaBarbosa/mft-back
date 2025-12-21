@@ -4,11 +4,11 @@ use crate::{
         interfaces::pending_change_repository::PendingChangesRepository,
     },
     domain::{
+        commands::user_commands::UserUpdateFilds,
         entities::user::User,
         enums::role::Role,
         errors::{domain_error::DomainError, permission_error::PermissionError},
         repositories::user_repository::UserRepository,
-        value_objects::user_update::UserUpdateFilds,
     },
 };
 use std::sync::Arc;
