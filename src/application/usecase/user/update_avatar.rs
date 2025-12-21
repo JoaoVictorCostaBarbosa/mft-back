@@ -1,11 +1,7 @@
 use crate::{
     application::dtos::user::user_response::UserResponse,
     domain::{
-        entities::user::User,
-        errors::{domain_error::DomainError},
-        repositories::user_repository::UserRepository,
-        services::bucket_storage::BucketStorage,
-        value_objects::user_update::UserUpdateFilds,
+        commands::user_commands::UserUpdateFilds, entities::user::User, errors::domain_error::DomainError, repositories::user_repository::UserRepository, services::bucket_storage::BucketStorage
     },
 };
 use std::sync::Arc;
