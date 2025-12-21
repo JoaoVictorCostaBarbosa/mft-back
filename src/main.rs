@@ -1,9 +1,9 @@
+mod adapters;
 mod api_doc;
 mod application;
 mod db;
 mod domain;
 mod infrastructure;
-mod interfaces;
 use crate::{
     api_doc::ApiDoc,
     application::app_state::app_state::AppState,
@@ -14,7 +14,7 @@ use crate::{
         repositories::postgres::RepositoryBundle,
         security::{argon2_hasher::Argon2Hasher, jwt::jwt_token_service::JwtService},
     },
-    interfaces::http::routers::build_http,
+    adapters::http::routers::build_http,
 };
 use axum::Router;
 use db::create_pool;
@@ -60,7 +60,7 @@ async fn main() {
             env.smtp_secure,
             env.smtp_user,
             env.smtp_pass,
-            Some("contato@myfittracker.com.br".to_string()),
+            None,
         )
         .expect("Failed to initialize SMTP service"),
     );
@@ -69,6 +69,7 @@ async fn main() {
         repos.user_repo,
         repos.pending_user_repo,
         repos.pending_change_repo,
+        repos.measurement_repo,
         cripto_service,
         jwt_service,
         lettre_service,
