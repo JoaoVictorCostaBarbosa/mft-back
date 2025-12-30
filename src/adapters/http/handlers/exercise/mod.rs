@@ -1,0 +1,9 @@
+pub mod create_exercise;
+pub mod delete_exercise;
+pub mod get_exercise_by_id;
+pub mod read_exercises;
+pub mod search_equipment;
+pub mod search_exercise_type;
+pub mod search_muscle_group;
+pub mod soft_delete_exercise;
+pub mod update_exercise;
