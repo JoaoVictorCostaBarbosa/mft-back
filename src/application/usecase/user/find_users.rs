@@ -1,5 +1,4 @@
 use crate::{
-    application::dtos::user::user_response::UserResponse,
     domain::{
         entities::user::User,
         enums::role::Role,
@@ -18,17 +17,12 @@ impl FindUsers {
         Self { user_repo }
     }
 
-    pub async fn execute(&self, current_user: User) -> Result<Vec<UserResponse>, DomainError> {
+    pub async fn execute(&self, current_user: User) -> Result<Vec<User>, DomainError> {
         if current_user.role != Role::Admin {
             return Err(DomainError::Permisson(PermissionError::Forbidden));
         }
 
         let users = self.user_repo.get_all_users().await?;
-
-        let users = users
-            .into_iter()
-            .map(|u| UserResponse::to_response(u))
-            .collect();
 
         Ok(users)
     }

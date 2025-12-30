@@ -1,6 +1,6 @@
 use crate::{
     application::{
-        dtos::user::{update_user_request::UpdateUserRequest, user_response::UserResponse},
+        dtos::user::update_user_request::UpdateUserRequest,
         interfaces::pending_change_repository::PendingChangesRepository,
     },
     domain::{
@@ -33,7 +33,7 @@ impl UpdateUser {
         &self,
         user_data: UpdateUserRequest,
         current_user: User,
-    ) -> Result<UserResponse, DomainError> {
+    ) -> Result<User, DomainError> {
         let target_id = match user_data.id {
             None => current_user.id,
             Some(id) => {
@@ -70,6 +70,6 @@ impl UpdateUser {
             .delete_pending_change(pending_change.id)
             .await?;
 
-        Ok(UserResponse::to_response(updated_user))
+        Ok(updated_user)
     }
 }

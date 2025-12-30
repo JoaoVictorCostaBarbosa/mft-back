@@ -1,8 +1,7 @@
-use crate::{
-    application::dtos::user::user_response::UserResponse,
-    domain::{
-        commands::user_commands::UserUpdateFilds, entities::user::User, errors::domain_error::DomainError, repositories::user_repository::UserRepository, services::bucket_storage::BucketStorage
-    },
+use crate::domain::{
+    commands::user_commands::UserUpdateFilds, entities::user::User,
+    errors::domain_error::DomainError, repositories::user_repository::UserRepository,
+    services::bucket_storage::BucketStorage,
 };
 use std::sync::Arc;
 
@@ -23,7 +22,7 @@ impl UpdateAvatar {
         &self,
         file_img: Vec<u8>,
         current_user: User,
-    ) -> Result<UserResponse, DomainError> {
+    ) -> Result<User, DomainError> {
         let path = format!("users/{}/profile", current_user.id);
 
         if current_user.url_img.is_some() {
@@ -32,10 +31,7 @@ impl UpdateAvatar {
             self.bucket_service.delete_file(&path).await?;
         }
 
-        let new_url = self
-            .bucket_service
-            .upload_file(&path, file_img)
-            .await?;
+        let new_url = self.bucket_service.upload_file(&path, file_img).await?;
 
         let updated_user = self
             .user_repo
@@ -48,6 +44,6 @@ impl UpdateAvatar {
             )
             .await?;
 
-        Ok(UserResponse::to_response(updated_user))
+        Ok(updated_user)
     }
 }

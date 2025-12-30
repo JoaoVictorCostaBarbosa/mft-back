@@ -2,7 +2,6 @@ use crate::{
     application::{
         dtos::user::{
             email_change_request::EmailChangeRequest, pending_change::PendingChange,
-            user_response::UserResponse,
         },
         interfaces::pending_change_repository::PendingChangesRepository,
     },
@@ -34,7 +33,7 @@ impl ChangeEmail {
         &self,
         user_data: EmailChangeRequest,
         current_user: User,
-    ) -> Result<UserResponse, DomainError> {
+    ) -> Result<User, DomainError> {
         let email = Email::new(user_data.email).map_err(UserError::EmailInvalid)?;
 
         let target_id = match user_data.id {
@@ -73,6 +72,6 @@ impl ChangeEmail {
             .delete_pending_change(pending_change.id)
             .await?;
 
-        Ok(UserResponse::to_response(updated_user))
+        Ok(updated_user)
     }
 }
