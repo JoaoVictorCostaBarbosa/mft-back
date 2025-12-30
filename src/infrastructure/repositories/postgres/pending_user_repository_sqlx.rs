@@ -1,6 +1,6 @@
 use crate::{
     application::{
-        dtos::user::pending_user::PendingUser,
+        resources::pending_user::PendingUser,
         interfaces::pending_user_repository::PendingUserRepository,
     },
     domain::errors::repository_error::RepositoryError,

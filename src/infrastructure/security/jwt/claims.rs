@@ -7,9 +7,3 @@ pub struct AccessClaims {
     pub role: Role,
     pub exp: usize,
 }
-
-#[derive(Serialize, Deserialize)]
-pub struct RefreshClaims {
-    pub sub: String,
-    pub exp: usize,
-}

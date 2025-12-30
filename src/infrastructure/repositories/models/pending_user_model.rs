@@ -1,4 +1,4 @@
-use crate::application::dtos::user::pending_user::PendingUser;
+use crate::application::resources::pending_user::PendingUser;
 use chrono::{DateTime, Utc};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;

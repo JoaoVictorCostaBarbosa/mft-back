@@ -56,7 +56,7 @@ impl UserRepository for UserRepositorySQLx {
         let result = sqlx::query_as::<_, UserModel>(
             r#"
             SELECT * FROM users
-            WHERE id = $1
+            WHERE id = $1 AND deleted_at IS NULL
             "#,
         )
         .bind(user_id)
@@ -73,7 +73,7 @@ impl UserRepository for UserRepositorySQLx {
         let result = sqlx::query_as::<_, UserModel>(
             r#"
             SELECT * FROM users
-            WHERE email = $1
+            WHERE email = $1 AND deleted_at IS NULL
             "#,
         )
         .bind(email)
@@ -93,6 +93,7 @@ impl UserRepository for UserRepositorySQLx {
         let result = sqlx::query_as::<_, UserModel>(
             r#"
             SELECT * FROM users
+            WHERE deleted_at IS NULL
             "#,
         )
         .fetch_all(&self.pool)
@@ -118,7 +119,7 @@ impl UserRepository for UserRepositorySQLx {
                 password = COALESCE($3, password),
                 url_img = COALESCE($4, url_img),
                 updated_at = $5
-            WHERE id = $6
+            WHERE id = $6 AND deleted_at IS NULL
             RETURNING *
             "#,
         )
@@ -145,7 +146,7 @@ impl UserRepository for UserRepositorySQLx {
             UPDATE users
             SET deleted_at = $1,
                 updated_at = $2
-            WHERE id = $3
+            WHERE id = $3 AND deleted_at IS NULL
             "#,
         )
         .bind(now)
