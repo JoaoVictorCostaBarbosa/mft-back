@@ -1,7 +1,4 @@
-use crate::adapters::http::dtos::user_dto::{
-    AuthResponseDTO, CreateUserRequestDTO, LoginRequestDTO, UpdateUserDTO, UserResponseDTO,
-    VerifyRequestDTO,
-};
+use crate::adapters::http::dtos::user_dto::CreateUserRequestDTO;
 use utoipa::{
     OpenApi,
     openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
@@ -10,21 +7,13 @@ use utoipa::{
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        crate::adapters::http::handlers::user::create_user::create_user_handler,
-        crate::adapters::http::handlers::user::login_user::login_user_handler,
-        crate::adapters::http::handlers::user::verify_user::verify_user_handler,
-        crate::adapters::http::handlers::user::soft_delete_user::soft_delete_user_handler,
-        crate::adapters::http::handlers::user::update_user::update_user_handler,
-        crate::adapters::http::handlers::user::send_code::send_code_handler,
+        // Caminho dos handlers
+        crate::adapters::http::handlers::auth::create_user::create_user_handler,
     ),
     components(
         schemas(
-            CreateUserRequestDTO,
-            LoginRequestDTO,
-            VerifyRequestDTO,
-            UserResponseDTO,
-            AuthResponseDTO,
-            UpdateUserDTO,
+            // dtos que derivam ToSchema
+            CreateUserRequestDTO
         )
     ),
     tags(
