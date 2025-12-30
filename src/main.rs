@@ -5,6 +5,7 @@ mod db;
 mod domain;
 mod infrastructure;
 use crate::{
+    adapters::http::routers::build_http,
     api_doc::ApiDoc,
     application::app_state::app_state::AppState,
     domain::services::{cripto::CriptoService, jwt::JwtProvider},
@@ -12,9 +13,11 @@ use crate::{
         config::env::LoadEnv,
         providers::{mail::lettre_sending::LettreSmtpService, r2_storage::R2Storage},
         repositories::postgres::RepositoryBundle,
-        security::{argon2_hasher::Argon2Hasher, jwt::jwt_token_service::JwtService},
+        security::{
+            argon2_hasher::Argon2Hasher, hmac_sha_hasher::HmacShaHasher,
+            jwt::jwt_token_service::JwtService,
+        },
     },
-    adapters::http::routers::build_http,
 };
 use axum::Router;
 use db::create_pool;
@@ -38,12 +41,10 @@ async fn main() {
 
     let cripto_service: Arc<dyn CriptoService> = Arc::new(Argon2Hasher {});
 
-    let jwt_service: Arc<dyn JwtProvider> = Arc::new(JwtService::new(
-        env.secret_access_key,
-        env.secret_refresh_key,
-        env.access_minutes,
-        env.refresh_days,
-    ));
+    let jwt_service: Arc<dyn JwtProvider> =
+        Arc::new(JwtService::new(env.secret_access_key, env.access_minutes));
+
+    let hmac_sha_service = Arc::new(HmacShaHasher::new(env.secret_refresh_key));
 
     let r2_service = Arc::new(R2Storage::new(
         &env.r2_access_key_id,
@@ -68,12 +69,16 @@ async fn main() {
     let app_state = AppState::new(
         repos.user_repo,
         repos.pending_user_repo,
+        repos.refresh_token_repo,
         repos.pending_change_repo,
         repos.measurement_repo,
+        repos.exercise_repo,
         cripto_service,
+        hmac_sha_service,
         jwt_service,
         lettre_service,
         r2_service,
+        env.refresh_days,
     );
 
     let app = Router::new()
