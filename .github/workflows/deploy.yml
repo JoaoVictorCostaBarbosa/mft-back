@@ -29,16 +29,38 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: SSH Deploy via Existing Tunnel
+      - name: Test Cloudflare SSH Tunnel
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+          echo "Testing Cloudflare Tunnel SSH access..."
+          echo "Host: ssh.myfittracker.com.br"
+          echo "User: ${{ secrets.SSH_USER }}"
+          
+          # Teste rápido de conectividade
+          timeout 10 ssh -o StrictHostKeyChecking=no \
+                      -o ConnectTimeout=5 \
+                      -o BatchMode=yes \
+                      ${{ secrets.SSH_USER }}@ssh.myfittracker.com.br \
+                      "echo 'Tunnel SSH working!'; exit 0" || \
+          echo "Tunnel test failed"
+          
+      - name: Deploy via Cloudflare Tunnel
+        run: |
+          set -x  # Ativa debug
+          ssh -v -o StrictHostKeyChecking=no \
+              -o ConnectTimeout=30 \
+              ${{ secrets.SSH_USER }}@ssh.myfittracker.com.br "
+            echo 'Starting deployment...'
             cd ~/myFitTracker/infra-v1
+            pwd
+            ls -la
             git pull origin main
             docker compose pull
             ./scripts/down.sh
-            if [ "${GITHUB_REPOSITORY##*/}" == "mft-back" ]; then
+            if [ '${GITHUB_REPOSITORY##*/}' == 'mft-back' ]; then
+              echo 'Running migrations for backend...'
               docker compose run --rm migration
             fi
             ./scripts/up.sh
-          EOF
+            echo 'Deployment completed!'
+          "
 
