@@ -29,19 +29,9 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Install Cloudflared
+      - name: SSH Deploy via Existing Tunnel
         run: |
-          curl -L --output /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-          chmod +x /usr/local/bin/cloudflared
-
-      - name: Start Cloudflare SSH Tunnel
-        run: |
-          cloudflared access ssh --hostname ${{ secrets.SSH_HOST }} &
-          sleep 5  # espera o túnel iniciar
-
-      - name: SSH Deploy
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
             cd ~/myFitTracker/infra-v1
             git pull origin main
             docker compose pull
@@ -50,3 +40,4 @@ jobs:
               docker compose run --rm migration
             fi
             ./scripts/up.sh
+          EOF
