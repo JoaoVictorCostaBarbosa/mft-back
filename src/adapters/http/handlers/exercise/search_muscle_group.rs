@@ -6,7 +6,7 @@ use axum::{
 };
 use crate::{
     adapters::http::{
-        dtos::{exercise_dto::ExerciseResponse, muscle_group_dto::MuscleGroupDTO},
+        dtos::{exercise_dto::ExerciseResponseDTO, muscle_group_dto::MuscleGroupDTO},
         errors::http_error::HttpError,
         extractors::current_user::CurrentUser,
         mappers::exercise_mapper::ExerciseMapper,
@@ -26,7 +26,7 @@ pub async fn search_myscle_group_exercise(
         .await
     {
         Ok(exercises) => {
-            let response: Vec<ExerciseResponse> = exercises
+            let response: Vec<ExerciseResponseDTO> = exercises
                 .into_iter()
                 .map(|e| ExerciseMapper::domain_to_response(e))
                 .collect();

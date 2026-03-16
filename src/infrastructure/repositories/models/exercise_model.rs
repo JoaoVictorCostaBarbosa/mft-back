@@ -1,6 +1,7 @@
 use crate::{
     domain::{
-        entities::exercise::Exercise, errors::user_error::UserError, value_objects::name_vo::Name,
+        entities::exercise::Exercise, errors::exercise_error::ExerciseError,
+        value_objects::name_vo::Name,
     },
     infrastructure::repositories::enums_db::{
         equipment_db::EquipmentDb, exercise_type_db::ExerciseTypeDb, muscle_group_db::MuscleGroupDb,
@@ -23,7 +24,7 @@ pub struct ExerciseModel {
 }
 
 impl TryFrom<ExerciseModel> for Exercise {
-    type Error = UserError;
+    type Error = ExerciseError;
 
     fn try_from(model: ExerciseModel) -> Result<Self, Self::Error> {
         Ok(Exercise {

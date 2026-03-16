@@ -8,4 +8,7 @@ pub enum ExerciseError {
 
     #[error("invalid filds criteria")]
     InvalidFieldsCriteria,
+
+    #[error("exercise not found")]
+    NotFound,
 }

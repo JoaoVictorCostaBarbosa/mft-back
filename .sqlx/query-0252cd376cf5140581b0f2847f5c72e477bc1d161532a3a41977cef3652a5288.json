@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM workout_template_in_plan\n            WHERE workout_plan_id = $1\n                AND workout_template_id = $2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0252cd376cf5140581b0f2847f5c72e477bc1d161532a3a41977cef3652a5288"
+}
