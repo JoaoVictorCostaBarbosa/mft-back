@@ -2,6 +2,7 @@ use crate::domain::errors::{
     bucket_error::BucketError, cripto_error::CriptoError, domain_error::DomainError,
     file_error::FileError, jwt_error::JwtError, permission_error::PermissionError,
     repository_error::RepositoryError, smtp_error::SmtpError,
+    workout_template_error::WorkoutTemplateError,
 };
 use axum::{
     Json,
@@ -93,6 +94,36 @@ impl IntoResponse for HttpError {
                 .into_response(),
 
             // ========================
+            // WORKOUT TEMPLATE ERRORS
+            // ========================
+            DomainError::WorkoutTemplate(err) => match err {
+                WorkoutTemplateError::NameInvalid(e) => (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!({ "error": format!("invalid name: {}", e) })),
+                ),
+
+                WorkoutTemplateError::AlreadyAdded => (
+                    StatusCode::CONFLICT,
+                    Json(json!({ "error": "exercise already added" })),
+                ),
+
+                WorkoutTemplateError::Exercise(e) => (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!({ "error": format!("exercise error: {}", e) })),
+                ),
+
+                WorkoutTemplateError::Forbidden => {
+                    (StatusCode::FORBIDDEN, Json(json!({ "error": "forbidden" })))
+                }
+
+                WorkoutTemplateError::NotFound => (
+                    StatusCode::NOT_FOUND,
+                    Json(json!({ "error": "workout template not found" })),
+                ),
+            }
+            .into_response(),
+
+            // ========================
             // JWT ERRORS
             // ========================
             DomainError::Jwt(err) => match err {
@@ -178,14 +209,11 @@ impl IntoResponse for HttpError {
             // ========================
             // CATCH-ALL
             // ========================
-
-            /*
             _ => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({ "error": "unmapped error" })),
             )
                 .into_response(),
-            */
         }
     }
 }

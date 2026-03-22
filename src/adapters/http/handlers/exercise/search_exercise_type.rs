@@ -1,6 +1,6 @@
 use crate::{
     adapters::http::{
-        dtos::{exercise_dto::ExerciseResponse, exercise_type_dto::ExerciseTypeDTO},
+        dtos::{exercise_dto::ExerciseResponseDTO, exercise_type_dto::ExerciseTypeDTO},
         errors::http_error::HttpError,
         extractors::current_user::CurrentUser,
         mappers::exercise_mapper::ExerciseMapper,
@@ -26,7 +26,7 @@ pub async fn search_exercise_type_handler(
         .await
     {
         Ok(exercises) => {
-            let result: Vec<ExerciseResponse> = exercises
+            let result: Vec<ExerciseResponseDTO> = exercises
                 .into_iter()
                 .map(|e| ExerciseMapper::domain_to_response(e))
                 .collect();

@@ -3,6 +3,8 @@ use crate::{
         app_state::{
             auth_app_state::AuthAppState, exercise_app_state::ExerciseAppState,
             measurement_app_state::MeasurementAppState, user_app_state::UserAppState,
+            workout_plan_app_state::WorkoutPlanAppState,
+            workout_template_app_state::WorkoutTemplateAppState,
         },
         config::auth_config::AuthConfig,
         interfaces::{
@@ -14,9 +16,12 @@ use crate::{
         repositories::{
             exercise_repository::ExerciseRepository, measurement_repository::MeasurementRepository,
             refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
+            workout_plan_repository::WorkoutPlanRepository,
+            workout_template_repository::WorkoutTemplateRepository,
         },
         services::{
-            bucket_storage::BucketStorage, cripto::CriptoService, jwt::JwtProvider, refresh_token_hasher::RefreshTokenHasher, smtp::SmtpService
+            bucket_storage::BucketStorage, cripto::CriptoService, jwt::JwtProvider,
+            refresh_token_hasher::RefreshTokenHasher, smtp::SmtpService,
         },
     },
 };
@@ -28,6 +33,8 @@ pub struct AppState {
     pub user: UserAppState,
     pub measurement: MeasurementAppState,
     pub exercise: ExerciseAppState,
+    pub workout_plan: WorkoutPlanAppState,
+    pub workout_template: WorkoutTemplateAppState,
     pub jwt_service: Arc<dyn JwtProvider>,
 }
 
@@ -39,6 +46,8 @@ impl AppState {
         pending_change_repo: Arc<dyn PendingChangesRepository>,
         measurement_repo: Arc<dyn MeasurementRepository>,
         exercise_repo: Arc<dyn ExerciseRepository>,
+        workout_plan_repo: Arc<dyn WorkoutPlanRepository>,
+        workout_template_repo: Arc<dyn WorkoutTemplateRepository>,
         cripto_service: Arc<dyn CriptoService>,
         hash_service: Arc<dyn RefreshTokenHasher>,
         jwt_service: Arc<dyn JwtProvider>,
@@ -66,6 +75,14 @@ impl AppState {
             ),
             measurement: MeasurementAppState::new(measurement_repo.clone()),
             exercise: ExerciseAppState::new(exercise_repo.clone()),
+            workout_plan: WorkoutPlanAppState::new(
+                workout_plan_repo.clone(),
+                workout_template_repo.clone(),
+            ),
+            workout_template: WorkoutTemplateAppState::new(
+                workout_template_repo.clone(),
+                exercise_repo.clone(),
+            ),
             jwt_service,
         }
     }

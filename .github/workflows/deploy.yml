@@ -1,4 +1,4 @@
-name: Docker Build and Deploy
+name: Docker Build and Push
 
 on:
   pull_request:
@@ -9,6 +9,7 @@ jobs:
   build-and-push:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,27 +24,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest
-
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Cloudflared
-        run: |
-          curl -L --output /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-          chmod +x /usr/local/bin/cloudflared
-
-      - name: SSH Deploy via Cloudflare Tunnel
-        run: |
-          # conecta via cloudflared e executa os comandos de deploy
-          cloudflared access ssh --hostname ${{ secrets.SSH_HOST }} --remote-user ${{ secrets.SSH_USER }} << EOF
-            cd ~/myFitTracker/infra-v1
-            git pull origin main
-            docker compose pull
-            ./scripts/down.sh
-            if [ "${GITHUB_REPOSITORY##*/}" == "mft-back" ]; then
-              docker compose run --rm migration
-            fi
-            ./scripts/up.sh
-            EOF
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest

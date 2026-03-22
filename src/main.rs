@@ -54,17 +54,14 @@ async fn main() {
         &env.r2_s3_endpoint,
     ));
 
-    let lettre_service = Arc::new(
-        LettreSmtpService::new(
-            env.smtp_host,
-            env.smtp_port,
-            env.smtp_secure,
-            env.smtp_user,
-            env.smtp_pass,
-            None,
-        )
-        .expect("Failed to initialize SMTP service"),
-    );
+    let lettre_service = Arc::new(LettreSmtpService::new(
+        env.smtp_host,
+        env.smtp_port,
+        env.smtp_secure,
+        env.smtp_user,
+        env.smtp_pass,
+        None,
+    ));
 
     let app_state = AppState::new(
         repos.user_repo,
@@ -73,6 +70,8 @@ async fn main() {
         repos.pending_change_repo,
         repos.measurement_repo,
         repos.exercise_repo,
+        repos.workout_plan_repo,
+        repos.workout_template_repo,
         cripto_service,
         hmac_sha_service,
         jwt_service,

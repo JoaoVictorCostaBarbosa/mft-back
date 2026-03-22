@@ -6,7 +6,7 @@ use crate::domain::{
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Exercise {
     pub id: Uuid,
     pub user_id: Option<Uuid>,

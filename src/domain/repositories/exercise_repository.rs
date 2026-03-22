@@ -13,6 +13,7 @@ pub trait ExerciseRepository: Send + Sync + 'static {
         &self,
         fields: ExerciseFilterFields,
     ) -> Result<Vec<Exercise>, DomainError>;
+    async fn read_by_id(&self, exercise_id: Uuid) -> Result<Exercise, DomainError>;
     async fn update_exercise(
         &self,
         fields: ExerciseUpdateFields,

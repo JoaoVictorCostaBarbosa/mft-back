@@ -1,6 +1,6 @@
 use crate::{
     adapters::http::{
-        dtos::exercise_dto::ExerciseResponse, errors::http_error::HttpError,
+        dtos::exercise_dto::ExerciseResponseDTO, errors::http_error::HttpError,
         extractors::current_user::CurrentUser, mappers::exercise_mapper::ExerciseMapper,
     },
     application::app_state::app_state::AppState,
@@ -13,7 +13,7 @@ pub async fn read_exercises_handler(
 ) -> impl IntoResponse {
     match state.exercise.read.execute(current_user).await {
         Ok(exercises) => {
-            let response: Vec<ExerciseResponse> = exercises
+            let response: Vec<ExerciseResponseDTO> = exercises
                 .into_iter()
                 .map(|e| ExerciseMapper::domain_to_response(e))
                 .collect();
