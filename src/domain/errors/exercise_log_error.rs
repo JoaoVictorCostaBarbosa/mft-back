@@ -5,7 +5,7 @@ use thiserror::Error;
 pub enum ExerciseLogError {
     #[error("exercise log cannot be empty.")]
     EmptyExercise,
-    
+
     #[error("exercise log not found")]
     NotFound,
 
