@@ -3,5 +3,5 @@ pub enum ExerciseType {
     Strength,
     Cardio,
     Flexibility,
-    Balance
+    Balance,
 }
