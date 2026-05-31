@@ -14,6 +14,23 @@ use axum::{
     response::IntoResponse,
 };
 
+#[utoipa::path{
+    get,
+    path = "/api/exercises/type/{exercise_type}",
+    params(
+        ("exercise_type" = ExerciseTypeDTO, description = "Exercise type"),
+    ),
+    responses(
+        (status = 200, description = "Exercises found", body = [ExerciseResponseDTO]),
+        (status = 403, description = "denied permission"),
+        (status = 422, description = "unprocessable entity"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Exercises"
+}]
 pub async fn search_exercise_type_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
