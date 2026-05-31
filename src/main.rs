@@ -20,8 +20,10 @@ use crate::{
     },
 };
 use axum::Router;
+use axum::http::{HeaderValue, Method, header};
 use db::create_pool;
 use std::sync::Arc;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -33,6 +35,7 @@ async fn root() -> &'static str {
 async fn main() {
     dotenvy::dotenv().ok();
     let env = LoadEnv::new();
+    println!("INFO app: development mode = {}", env.app_development);
 
     let pool = create_pool(&env.database_url).await;
     println!("INFO sqlx::pool: connection established");
@@ -80,10 +83,33 @@ async fn main() {
         env.refresh_days,
     );
 
+    let cors_origins: Vec<HeaderValue> = env
+        .cors_allowed_origins
+        .iter()
+        .map(|origin| {
+            origin
+                .parse::<HeaderValue>()
+                .unwrap_or_else(|_| panic!("invalid CORS origin: {}", origin))
+        })
+        .collect();
+
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::list(cors_origins))
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE]);
+
     let app = Router::new()
         .route("/", axum::routing::get(root))
         .merge(build_http())
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .layer(cors)
         .with_state(app_state);
 
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
