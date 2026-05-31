@@ -11,6 +11,21 @@ use crate::{
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
+#[utoipa::path{
+    post,
+    path = "/api/workout-templates",
+    request_body = WorkoutTemplateRequestDTO,
+    responses(
+        (status = 201, description = "Workout template created", body = WorkoutTemplateResponseDTO),
+        (status = 403, description = "denied permission"),
+        (status = 422, description = "unprocessable entity"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Workout Templates"
+}]
 pub async fn create_workout_template_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
