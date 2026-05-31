@@ -9,6 +9,23 @@ use axum::{
 };
 use uuid::Uuid;
 
+#[utoipa::path{
+    delete,
+    path = "/api/workout-plans/{workout_plan_id}",
+    params(
+        ("workout_plan_id" = Uuid, description = "Workout plan ID to be deleted", example = "b728b759-4d32-4148-936e-d9036c071d72"),
+    ),
+    responses(
+        (status = 204, description = "no content"),
+        (status = 403, description = "denied permission"),
+        (status = 404, description = "not found"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Workout Plans"
+}]
 pub async fn delete_workout_plan_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
