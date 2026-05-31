@@ -8,6 +8,19 @@ use crate::{
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
+#[utoipa::path{
+    get,
+    path = "/api/workout-plans",
+    responses(
+        (status = 200, description = "Workout plans found", body = [WorkoutPlanSummaryResponseDTO]),
+        (status = 403, description = "denied permission"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Workout Plans"
+}]
 pub async fn read_user_workout_plans_summary_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
