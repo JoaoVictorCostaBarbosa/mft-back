@@ -1,6 +1,6 @@
 use crate::domain::{
     commands::workout_template_command::WorkoutTemplateFilterFields,
-    entities::{user::User, workout_template::{WorkoutTemplateSummary}},
+    entities::{user::User, workout_template::WorkoutTemplateSummary},
     errors::domain_error::DomainError,
     repositories::workout_template_repository::WorkoutTemplateRepository,
 };
@@ -15,7 +15,10 @@ impl ReadWorkoutsTemplate {
         Self { workout_repo }
     }
 
-    pub async fn execute(&self, current_user: User) -> Result<Vec<WorkoutTemplateSummary>, DomainError> {
+    pub async fn execute(
+        &self,
+        current_user: User,
+    ) -> Result<Vec<WorkoutTemplateSummary>, DomainError> {
         let workouts = self
             .workout_repo
             .read(WorkoutTemplateFilterFields {
