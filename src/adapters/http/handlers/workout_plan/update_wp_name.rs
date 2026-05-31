@@ -11,6 +11,22 @@ use crate::{
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
+#[utoipa::path{
+    patch,
+    path = "/api/workout-plans/change-name",
+    request_body = WorkoutPlanUpdateNameRequestDTO,
+    responses(
+        (status = 200, description = "Workout plan updated", body = WorkoutPlanResponseDTO),
+        (status = 403, description = "denied permission"),
+        (status = 404, description = "not found"),
+        (status = 422, description = "unprocessable entity"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Workout Plans"
+}]
 pub async fn update_workout_plan_name_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
