@@ -1,6 +1,6 @@
+use crate::domain::enums::equipment::Equipment;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use crate::domain::enums::equipment::Equipment;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub enum EquipmentDTO {
