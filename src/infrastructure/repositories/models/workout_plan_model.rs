@@ -11,4 +11,3 @@ pub struct WorkoutPlanRowModel {
     pub updated_at: Option<DateTime<Utc>>,
     pub deleted_at: Option<DateTime<Utc>>,
 }
-
