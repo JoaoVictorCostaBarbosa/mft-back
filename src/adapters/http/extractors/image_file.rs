@@ -5,7 +5,8 @@ use axum::{
 use axum_extra::extract::Multipart;
 
 use crate::{
-    adapters::http::errors::http_error::HttpError, domain::errors::{domain_error::DomainError, file_error::FileError}
+    adapters::http::errors::http_error::HttpError,
+    domain::errors::{domain_error::DomainError, file_error::FileError},
 };
 
 pub struct ImageFile(pub Vec<u8>);
@@ -31,29 +32,21 @@ where
                 let mime = field
                     .content_type()
                     .map(|m| m.to_string())
-                    .ok_or_else(|| {
-                        HttpError(DomainError::File(FileError::InvalidMimeType))
-                    })?;
+                    .ok_or_else(|| HttpError(DomainError::File(FileError::InvalidMimeType)))?;
 
                 if mime != "image/png" && mime != "image/jpeg" {
-                    return Err(HttpError(DomainError::File(
-                        FileError::InvalidMimeType,
-                    )));
+                    return Err(HttpError(DomainError::File(FileError::InvalidMimeType)));
                 }
 
                 let bytes = field
                     .bytes()
                     .await
-                    .map_err(|_| {
-                        HttpError(DomainError::File(FileError::FileReadError))
-                    })?;
+                    .map_err(|_| HttpError(DomainError::File(FileError::FileReadError)))?;
 
                 if bytes.len() > 2_000_000 {
-                    return Err(HttpError(DomainError::File(
-                        FileError::FileTooLarge {
-                            max_size: 2_000_000,
-                        },
-                    )));
+                    return Err(HttpError(DomainError::File(FileError::FileTooLarge {
+                        max_size: 2_000_000,
+                    })));
                 }
 
                 return Ok(ImageFile(bytes.to_vec()));
