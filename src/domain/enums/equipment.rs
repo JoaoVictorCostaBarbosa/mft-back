@@ -6,5 +6,5 @@ pub enum Equipment {
     Bodyweight,
     Kettlerbell,
     ResistanceBand,
-    Other
+    Other,
 }
