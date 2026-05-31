@@ -8,6 +8,19 @@ use crate::{
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
+#[utoipa::path{
+    get,
+    path = "/api/workout-templates",
+    responses(
+        (status = 200, description = "Workout templates found", body = [WorkoutTemplateSummaryResponse]),
+        (status = 403, description = "denied permission"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Workout Templates"
+}]
 pub async fn read_user_workout_templates_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
