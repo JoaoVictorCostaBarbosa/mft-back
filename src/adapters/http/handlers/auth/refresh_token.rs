@@ -7,6 +7,17 @@ use crate::{
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
+#[utoipa::path{
+    post,
+    path = "/api/auth/refresh",
+    request_body = RefreshRequestDTO,
+    responses(
+        (status = 200, description = "session refreshed", body = RefreshResponseDTO),
+        (status = 401, description = "unauthorized"),
+        (status = 500, description = "internal server error"),
+    ),
+    tag = "Auth"
+}]
 pub async fn refresh_access_handler(
     State(state): State<AppState>,
     Json(token): Json<RefreshRequestDTO>,
