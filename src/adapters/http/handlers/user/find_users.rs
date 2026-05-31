@@ -11,6 +11,19 @@ use axum::{
     response::IntoResponse,
 };
 
+#[utoipa::path{
+    get,
+    path = "/api/users",
+    responses(
+        (status = 200, description = "Users found", body = [UserResponseDTO]),
+        (status = 403, description = "denied permission"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Users"
+}]
 pub async fn find_users_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
