@@ -64,8 +64,5 @@ fn map_optional_vo<T, E>(
     value: Option<f64>,
     constructor: impl Fn(f32) -> Result<T, E>,
 ) -> Result<Option<T>, E> {
-    value
-        .map(|v| constructor(v as f32))
-        .transpose()
+    value.map(|v| constructor(v as f32)).transpose()
 }
-
