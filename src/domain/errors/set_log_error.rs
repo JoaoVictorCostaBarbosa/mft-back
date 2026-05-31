@@ -7,5 +7,5 @@ pub enum SetLogError {
     Weight(#[from] WeightError),
 
     #[error("set log lot found")]
-    NotFound
+    NotFound,
 }
