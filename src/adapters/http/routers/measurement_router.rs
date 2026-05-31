@@ -1,5 +1,4 @@
 use crate::{
-    application::app_state::app_state::AppState,
     adapters::http::handlers::measurement::{
         create_measurement::create_measurement_handler,
         delete_measurement::delete_measurement_handler,
@@ -7,6 +6,7 @@ use crate::{
         find_measurements::find_measurements_handler,
         soft_delete_measurement::soft_delete_measurement_handler,
     },
+    application::app_state::app_state::AppState,
 };
 use axum::{
     Router,
