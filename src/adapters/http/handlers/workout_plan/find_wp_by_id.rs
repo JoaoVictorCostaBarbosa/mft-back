@@ -13,6 +13,23 @@ use axum::{
 };
 use uuid::Uuid;
 
+#[utoipa::path{
+    get,
+    path = "/api/workout-plans/{workout_plan_id}",
+    params(
+        ("workout_plan_id" = Uuid, description = "Workout plan ID", example = "b728b759-4d32-4148-936e-d9036c071d72"),
+    ),
+    responses(
+        (status = 200, description = "Workout plan found", body = WorkoutPlanResponseDTO),
+        (status = 403, description = "denied permission"),
+        (status = 404, description = "not found"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Workout Plans"
+}]
 pub async fn find_workout_plan_by_id_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
