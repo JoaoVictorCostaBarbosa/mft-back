@@ -13,6 +13,23 @@ use axum::{
 };
 use uuid::Uuid;
 
+#[utoipa::path{
+    get,
+    path = "/api/workout-templates/{workout_id}",
+    params(
+        ("workout_id" = Uuid, description = "Workout template ID", example = "b728b759-4d32-4148-936e-d9036c071d72"),
+    ),
+    responses(
+        (status = 200, description = "Workout template found", body = WorkoutTemplateResponseDTO),
+        (status = 403, description = "denied permission"),
+        (status = 404, description = "not found"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Workout Templates"
+}]
 pub async fn find_workout_template_by_id_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
