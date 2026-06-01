@@ -11,7 +11,7 @@ use crate::{
     domain::services::{cripto::CriptoService, jwt::JwtProvider},
     infrastructure::{
         config::env::LoadEnv,
-        providers::{mail::lettre_sending::LettreSmtpService, r2_storage::R2Storage},
+        providers::{mail::resend_sending::ResendEmailService, r2_storage::R2Storage},
         repositories::postgres::RepositoryBundle,
         security::{
             argon2_hasher::Argon2Hasher, hmac_sha_hasher::HmacShaHasher,
@@ -62,13 +62,9 @@ async fn main() {
         &env.r2_s3_endpoint,
     ));
 
-    let lettre_service = Arc::new(LettreSmtpService::new(
-        env.smtp_host,
-        env.smtp_port,
-        env.smtp_secure,
-        env.smtp_user,
+    let resend_service = Arc::new(ResendEmailService::new(
         env.smtp_pass,
-        env.smtp_from,
+        env.smtp_from.expect("SMTP_FROM is required"),
     ));
 
     let app_state = AppState::new(
@@ -83,7 +79,7 @@ async fn main() {
         cripto_service,
         hmac_sha_service,
         jwt_service,
-        lettre_service,
+        resend_service,
         r2_service,
         env.refresh_days,
     );

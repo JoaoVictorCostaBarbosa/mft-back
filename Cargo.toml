@@ -33,3 +33,4 @@ aws-sdk-s3 = "1.117.0"
 sha2 = "0.10"
 hmac = "0.12"
 hex = "0.4"
+reqwest = { version = "0.12", features = ["json"] }
