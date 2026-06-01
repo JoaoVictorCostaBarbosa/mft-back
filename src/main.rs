@@ -68,7 +68,7 @@ async fn main() {
         env.smtp_secure,
         env.smtp_user,
         env.smtp_pass,
-        None,
+        env.smtp_from,
     ));
 
     let app_state = AppState::new(
