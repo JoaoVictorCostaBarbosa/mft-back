@@ -1,5 +1,5 @@
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
-use cookie::time::Duration;
+use cookie::time::{Duration, OffsetDateTime};
 
 pub const ACCESS_TOKEN_COOKIE: &str = "mft_access_token";
 pub const REFRESH_TOKEN_COOKIE: &str = "mft_refresh_token";
@@ -36,12 +36,15 @@ impl CookieConfig {
     }
 
     fn auth_cookie(&self, name: &'static str, value: String, max_age: Duration) -> Cookie<'static> {
+        let expires_at = OffsetDateTime::now_utc() + max_age;
+
         Cookie::build((name, value))
             .path("/")
             .http_only(true)
             .secure(self.secure)
             .same_site(SameSite::Lax)
             .max_age(max_age)
+            .expires(expires_at)
             .build()
     }
 
@@ -52,6 +55,7 @@ impl CookieConfig {
             .secure(self.secure)
             .same_site(SameSite::Lax)
             .max_age(Duration::ZERO)
+            .expires(OffsetDateTime::UNIX_EPOCH)
             .build()
     }
 }
