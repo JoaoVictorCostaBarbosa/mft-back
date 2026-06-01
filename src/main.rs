@@ -40,6 +40,11 @@ async fn main() {
     let pool = create_pool(&env.database_url).await;
     println!("INFO sqlx::pool: connection established");
 
+    sqlx::migrate!("./migrations")
+    .run(&pool)
+    .await
+    .expect("Failed to run migrations");
+
     let repos = RepositoryBundle::new(pool.clone());
 
     let cripto_service: Arc<dyn CriptoService> = Arc::new(Argon2Hasher {});
