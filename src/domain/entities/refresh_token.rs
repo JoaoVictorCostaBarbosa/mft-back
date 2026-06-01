@@ -13,7 +13,7 @@ pub struct RefreshToken {
 impl RefreshToken {
     pub fn new(user_id: Uuid, hash: String, duration_days: i64) -> Self {
         let now = Utc::now();
-        
+
         Self {
             id: Uuid::new_v4(),
             user_id,

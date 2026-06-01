@@ -2,6 +2,7 @@ pub mod change_email;
 pub mod change_password;
 pub mod delete_user;
 pub mod find_users;
+pub mod get_current_user;
 pub mod restore_user;
 pub mod send_change_code;
 pub mod soft_delete_user;

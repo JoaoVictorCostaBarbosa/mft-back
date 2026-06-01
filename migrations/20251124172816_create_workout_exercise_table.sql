@@ -5,6 +5,10 @@ CREATE TABLE "workout_exercise" (
   "exercise_id" uuid NOT NULL,
   PRIMARY KEY ("workout_id", "exercise_id"),
 
-  FOREIGN KEY ("workout_id") REFERENCES "workout" ("id") ON UPDATE CASCADE,
-  FOREIGN KEY ("exercise_id") REFERENCES "exercise" ("id") ON UPDATE CASCADE
+  FOREIGN KEY ("workout_id") REFERENCES "workout_template" ("id")
+    ON UPDATE CASCADE
+    ON DELETE CASCADE,
+  FOREIGN KEY ("exercise_id") REFERENCES "exercise" ("id")
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
 );

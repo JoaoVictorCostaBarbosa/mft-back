@@ -40,8 +40,10 @@ impl CreateMeasurement {
             request.right_forearm,
         )?;
 
-        self.measurement_repo.create_measurement(measurement.clone()).await?;
-        
+        self.measurement_repo
+            .create_measurement(measurement.clone())
+            .await?;
+
         Ok(measurement)
     }
 }

@@ -1,6 +1,10 @@
 use std::env;
 
 pub struct LoadEnv {
+    pub port: u16,
+    pub app_development: bool,
+    pub cors_allowed_origins: Vec<String>,
+
     pub database_url: String,
 
     pub secret_access_key: String,
@@ -25,6 +29,13 @@ pub struct LoadEnv {
 impl LoadEnv {
     pub fn new() -> Self {
         Self {
+            port: env_var_parse("PORT"),
+            app_development: env_var_parse_bool_default("APP_DEVELOPMENT", false),
+            cors_allowed_origins: env_var_list_default(
+                "CORS_ALLOWED_ORIGINS",
+                vec!["http://localhost:5173".to_string()],
+            ),
+
             database_url: env_var("DATABASE_URL"),
 
             secret_access_key: env_var("SECRET_ACCESS_KEY"),
@@ -62,4 +73,25 @@ fn env_var_parse<T: std::str::FromStr>(key: &str) -> T {
 fn env_var_parse_bool(key: &str) -> bool {
     let v = env::var(key).expect(&format!("missing env var: {}", key));
     matches!(v.to_lowercase().as_str(), "true" | "1" | "yes")
+}
+
+fn env_var_parse_bool_default(key: &str, default: bool) -> bool {
+    env::var(key)
+        .map(|v| matches!(v.to_lowercase().as_str(), "true" | "1" | "yes"))
+        .unwrap_or(default)
+}
+
+fn env_var_list_default(key: &str, default: Vec<String>) -> Vec<String> {
+    env::var(key)
+        .map(|value| {
+            value
+                .split(',')
+                .map(str::trim)
+                .filter(|origin| !origin.is_empty())
+                .map(ToString::to_string)
+                .collect()
+        })
+        .ok()
+        .filter(|values: &Vec<String>| !values.is_empty())
+        .unwrap_or(default)
 }

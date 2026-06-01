@@ -16,7 +16,7 @@ use axum::{
     path = "/api/auth/verify",
     request_body = VerifyRequestDTO,
     responses(
-        (status = 201, description = "create user", body = AuthResponseDTO),
+        (status = 200, description = "create user", body = AuthResponseDTO),
         (status = 422, description = "unprocessable entity"),
         (status = 500, description = "internal server error"),
     ),

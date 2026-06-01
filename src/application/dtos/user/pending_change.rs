@@ -12,11 +12,11 @@ pub struct PendingChange {
 impl PendingChange {
     pub fn new(user_id: Uuid, code: u32) -> Self {
         let datetime = Utc::now() + Duration::minutes(10);
-        
+
         Self {
             id: Uuid::new_v4(),
             user_id,
-            code, 
+            code,
             limit_date: datetime,
         }
     }

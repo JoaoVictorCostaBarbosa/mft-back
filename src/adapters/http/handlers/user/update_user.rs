@@ -13,7 +13,8 @@ use axum::{
 
 #[utoipa::path{
     patch,
-    path = "/api/users/",
+    path = "/api/users",
+    request_body = UpdateUserDTO,
     responses(
         (status = 200, description = "User updated", body = UserResponseDTO),
         (status = 403, description = "denied permission"),

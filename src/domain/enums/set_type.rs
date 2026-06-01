@@ -3,5 +3,5 @@ pub enum SetType {
     Warmup,
     Working,
     Drop,
-    Failure
+    Failure,
 }

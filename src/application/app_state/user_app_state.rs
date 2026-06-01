@@ -3,8 +3,9 @@ use crate::{
         interfaces::pending_change_repository::PendingChangesRepository,
         usecase::user::{
             change_email::ChangeEmail, change_password::ChangePassword, delete_user::DeleteUser,
-            find_users::FindUsers, restore_user::RestoreUser, send_change_code::SendChangeCode,
-            soft_delete_user::SoftDeleteUser, update_avatar::UpdateAvatar, update_user::UpdateUser,
+            find_users::FindUsers, get_current_user::GetCurrentUser, restore_user::RestoreUser,
+            send_change_code::SendChangeCode, soft_delete_user::SoftDeleteUser,
+            update_avatar::UpdateAvatar, update_user::UpdateUser,
         },
     },
     domain::{
@@ -16,6 +17,7 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct UserAppState {
+    pub get_current_user: Arc<GetCurrentUser>,
     pub find_users: Arc<FindUsers>,
     pub send_change_code: Arc<SendChangeCode>,
     pub change_email: Arc<ChangeEmail>,
@@ -36,6 +38,7 @@ impl UserAppState {
         bucket_service: Arc<dyn BucketStorage>,
     ) -> Self {
         Self {
+            get_current_user: Arc::new(GetCurrentUser::new()),
             find_users: Arc::new(FindUsers::new(user_repo.clone())),
             send_change_code: Arc::new(SendChangeCode::new(
                 pending_change_repo.clone(),

@@ -7,7 +7,8 @@ use crate::{
         dtos::user::pending_change::PendingChange,
         interfaces::pending_change_repository::PendingChangesRepository,
     },
-    domain::errors::repository_error::RepositoryError, infrastructure::repositories::models::pending_change_model::PendingChangeModel,
+    domain::errors::repository_error::RepositoryError,
+    infrastructure::repositories::models::pending_change_model::PendingChangeModel,
 };
 
 pub struct PendingChangeRepositorySqlx {
@@ -49,7 +50,7 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
         user_id: Uuid,
     ) -> Result<PendingChange, RepositoryError> {
         self.clear_expired_pending_change().await?;
-        
+
         let result = sqlx::query_as::<_, PendingChangeModel>(
             r#"
             SELECT * FROM pending_change
@@ -60,7 +61,7 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
         .fetch_one(&self.pool)
         .await
         .map_err(RepositoryError::from)?;
-        
+
         Ok(result.to())
     }
 
@@ -75,7 +76,7 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
         .execute(&self.pool)
         .await
         .map_err(RepositoryError::from)?;
-        
+
         Ok(())
     }
 
@@ -89,7 +90,7 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
         .execute(&self.pool)
         .await
         .map_err(RepositoryError::from)?;
-        
+
         Ok(())
     }
 }

@@ -1,3 +1,4 @@
+use crate::adapters::http::dtos::role_dto::RoleDTO;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -20,6 +21,7 @@ pub struct UserResponseDTO {
     pub id: Uuid,
     pub name: String,
     pub email: String,
+    pub role: RoleDTO,
     pub url_img: Option<String>,
 }
 

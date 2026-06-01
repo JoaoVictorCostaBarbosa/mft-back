@@ -11,7 +11,10 @@ pub trait PendingChangesRepository: Send + Sync + 'static {
         &self,
         pending_change: PendingChange,
     ) -> Result<(), RepositoryError>;
-    async fn get_valid_pending_change_by_user_id(&self, id: Uuid) -> Result<PendingChange, RepositoryError>;
+    async fn get_valid_pending_change_by_user_id(
+        &self,
+        id: Uuid,
+    ) -> Result<PendingChange, RepositoryError>;
     async fn delete_pending_change(&self, id: Uuid) -> Result<(), RepositoryError>;
     async fn clear_expired_pending_change(&self) -> Result<(), RepositoryError>;
 }

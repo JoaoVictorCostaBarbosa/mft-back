@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum CriptoError {    
+pub enum CriptoError {
     #[error("error genereting hash")]
     HashError,
 

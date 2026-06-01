@@ -1,6 +1,6 @@
 use crate::{
     adapters::http::{
-        dtos::{equipment_dto::EquipmentDTO, exercise_dto::ExerciseResponse},
+        dtos::{equipment_dto::EquipmentDTO, exercise_dto::ExerciseResponseDTO},
         errors::http_error::HttpError,
         extractors::current_user::CurrentUser,
         mappers::exercise_mapper::ExerciseMapper,
@@ -14,6 +14,23 @@ use axum::{
     response::IntoResponse,
 };
 
+#[utoipa::path{
+    get,
+    path = "/api/exercises/equipment/{equipment}",
+    params(
+        ("equipment" = EquipmentDTO, description = "Exercise equipment"),
+    ),
+    responses(
+        (status = 200, description = "Exercises found", body = [ExerciseResponseDTO]),
+        (status = 403, description = "denied permission"),
+        (status = 422, description = "unprocessable entity"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Exercises"
+}]
 pub async fn search_equipment_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
@@ -26,7 +43,7 @@ pub async fn search_equipment_handler(
         .await
     {
         Ok(exercises) => {
-            let response: Vec<ExerciseResponse> = exercises
+            let response: Vec<ExerciseResponseDTO> = exercises
                 .into_iter()
                 .map(|e| ExerciseMapper::domain_to_response(e))
                 .collect();

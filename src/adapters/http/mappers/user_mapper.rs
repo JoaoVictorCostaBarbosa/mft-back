@@ -24,6 +24,7 @@ impl UserMappers {
             id: response.id,
             name: response.name.value().to_string(),
             email: response.email.clone().value().to_string(),
+            role: response.role.into(),
             url_img: response.url_img,
         }
     }

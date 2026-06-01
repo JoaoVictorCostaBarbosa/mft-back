@@ -4,6 +4,17 @@ use crate::{
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
+#[utoipa::path{
+    patch,
+    path = "/api/auth/logout",
+    request_body = RefreshRequestDTO,
+    responses(
+        (status = 200, description = "logout successful"),
+        (status = 401, description = "unauthorized"),
+        (status = 500, description = "internal server error"),
+    ),
+    tag = "Auth"
+}]
 pub async fn logout_handler(
     State(state): State<AppState>,
     Json(token): Json<RefreshRequestDTO>,

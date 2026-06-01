@@ -1,5 +1,6 @@
 pub mod delete_user;
 pub mod find_users;
+pub mod get_current_user;
 pub mod restore_user;
 pub mod send_code;
 pub mod soft_delete_user;

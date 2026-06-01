@@ -1,5 +1,8 @@
 use crate::domain::{errors::bucket_error::BucketError, services::bucket_storage::BucketStorage};
-use aws_sdk_s3::{Client, config::{Region, BehaviorVersion}};
+use aws_sdk_s3::{
+    Client,
+    config::{BehaviorVersion, Region},
+};
 use axum::async_trait;
 
 #[derive(Clone)]
@@ -25,7 +28,7 @@ impl R2Storage {
             .credentials_provider(credentials)
             .endpoint_url(s3_endpoint)
             .force_path_style(true)
-            .behavior_version(BehaviorVersion::latest())   // ⭐ OBRIGATÓRIO
+            .behavior_version(BehaviorVersion::latest()) // ⭐ OBRIGATÓRIO
             .build();
 
         let client = Client::from_conf(config);

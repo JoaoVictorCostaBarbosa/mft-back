@@ -6,7 +6,8 @@ use crate::{
     application::app_state::app_state::AppState,
 };
 use axum::{
-    Router,    routing::{patch, post},
+    Router,
+    routing::{patch, post},
 };
 
 pub fn auth_routers() -> Router<AppState> {

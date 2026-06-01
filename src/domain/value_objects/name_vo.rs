@@ -10,18 +10,18 @@ pub struct Name(String);
 pub enum NameError {
     #[error("name is empty")]
     EmptyName,
-    
+
     #[error("name too short")]
     TooShort,
-    
+
     #[error("name too large")]
     TooLarge,
-    
+
     #[error("name contains invalid character")]
     InvalidFormat,
-    
+
     #[error("compile regex error")]
-    RegexError
+    RegexError,
 }
 
 impl Name {
@@ -40,8 +40,8 @@ impl Name {
             return Err(NameError::TooLarge);
         }
 
-        let regex = regex::Regex::new(r"^[a-zA-Z0-9À-ú ._-]+$")
-            .map_err(|_| NameError::RegexError)?;
+        let regex =
+            regex::Regex::new(r"^[a-zA-Z0-9À-ú ._-]+$").map_err(|_| NameError::RegexError)?;
 
         if !regex.is_match(&value) {
             return Err(NameError::InvalidFormat);

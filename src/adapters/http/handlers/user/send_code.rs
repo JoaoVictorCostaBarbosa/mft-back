@@ -1,5 +1,6 @@
 use crate::{
-    adapters::http::{errors::http_error::HttpError, extractors::current_user::CurrentUser}, application::app_state::app_state::AppState,
+    adapters::http::{errors::http_error::HttpError, extractors::current_user::CurrentUser},
+    application::app_state::app_state::AppState,
 };
 use axum::{
     extract::{Json, State},
