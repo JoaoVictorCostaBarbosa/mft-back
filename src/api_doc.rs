@@ -1,27 +1,29 @@
-use crate::adapters::http::dtos::{
-    equipment_dto::EquipmentDTO,
-    exercise_dto::{ExerciseRequest, ExerciseResponseDTO, ExerciseUpdateRequest},
-    exercise_type_dto::ExerciseTypeDTO,
-    measurement_dto::{CreateMeasurementDTO, MeasurementResponse},
-    muscle_group_dto::MuscleGroupDTO,
-    role_dto::RoleDTO,
-    user_dto::{
-        AuthResponseDTO, CreateUserRequestDTO, LoginRequestDTO, RefreshRequestDTO,
-        RefreshResponseDTO, UpdateEmailDTO, UpdatePasswordDTO, UpdateUserDTO, UserResponseDTO,
-        VerifyRequestDTO,
-    },
-    workout_plan::{
-        WorkoutPlanRequestDTO, WorkoutPlanResponseDTO, WorkoutPlanSummaryResponseDTO,
-        WorkoutPlanUpdateNameRequestDTO,
-    },
-    workout_template::{
-        WorkoutTemplateExerciseDTO, WorkoutTemplateRequestDTO, WorkoutTemplateResponseDTO,
-        WorkoutTemplateSummaryResponse, WorkoutTemplateUpdateNameDTO,
+use crate::adapters::http::{
+    cookies::ACCESS_TOKEN_COOKIE,
+    dtos::{
+        equipment_dto::EquipmentDTO,
+        exercise_dto::{ExerciseRequest, ExerciseResponseDTO, ExerciseUpdateRequest},
+        exercise_type_dto::ExerciseTypeDTO,
+        measurement_dto::{CreateMeasurementDTO, MeasurementResponse},
+        muscle_group_dto::MuscleGroupDTO,
+        role_dto::RoleDTO,
+        user_dto::{
+            AuthResponseDTO, CreateUserRequestDTO, LoginRequestDTO, RefreshResponseDTO,
+            UpdateEmailDTO, UpdatePasswordDTO, UpdateUserDTO, UserResponseDTO, VerifyRequestDTO,
+        },
+        workout_plan::{
+            WorkoutPlanRequestDTO, WorkoutPlanResponseDTO, WorkoutPlanSummaryResponseDTO,
+            WorkoutPlanUpdateNameRequestDTO,
+        },
+        workout_template::{
+            WorkoutTemplateExerciseDTO, WorkoutTemplateRequestDTO, WorkoutTemplateResponseDTO,
+            WorkoutTemplateSummaryResponse, WorkoutTemplateUpdateNameDTO,
+        },
     },
 };
 use utoipa::{
     OpenApi,
-    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
 };
 
 #[derive(OpenApi)]
@@ -86,7 +88,6 @@ use utoipa::{
             LoginRequestDTO,
             MeasurementResponse,
             MuscleGroupDTO,
-            RefreshRequestDTO,
             RefreshResponseDTO,
             RoleDTO,
             UpdateEmailDTO,
@@ -125,12 +126,7 @@ impl utoipa::Modify for SecurityAddon {
         let components = openapi.components.as_mut().unwrap();
         components.add_security_scheme(
             "bearer_auth",
-            SecurityScheme::Http(
-                HttpBuilder::new()
-                    .scheme(HttpAuthScheme::Bearer)
-                    .bearer_format("JWT")
-                    .build(),
-            ),
+            SecurityScheme::ApiKey(ApiKey::Cookie(ApiKeyValue::new(ACCESS_TOKEN_COOKIE))),
         )
     }
 }

@@ -1,6 +1,5 @@
 use crate::adapters::http::dtos::user_dto::*;
 use crate::application::dtos::auth::login_request::LoginRequest;
-use crate::application::dtos::auth::refresh_response::RefreshResponse;
 use crate::application::dtos::auth::user_create::UserCreate;
 use crate::application::dtos::auth::verify_request::VerifyRequest;
 use crate::application::dtos::user::email_change_request::EmailChangeRequest;
@@ -29,16 +28,9 @@ impl UserMappers {
         }
     }
 
-    pub fn to_auth_response_dto(
-        &self,
-        user: User,
-        access: String,
-        refresh: String,
-    ) -> AuthResponseDTO {
+    pub fn to_auth_response_dto(&self, user: User) -> AuthResponseDTO {
         AuthResponseDTO {
             user: self.to_user_response_dto(user),
-            access: access,
-            refresh: refresh,
         }
     }
 
@@ -80,10 +72,7 @@ impl UserMappers {
         }
     }
 
-    pub fn to_refresh_response(token: RefreshResponse) -> RefreshResponseDTO {
-        RefreshResponseDTO {
-            access: token.access,
-            refresh: token.refresh,
-        }
+    pub fn to_refresh_response() -> RefreshResponseDTO {
+        RefreshResponseDTO {}
     }
 }

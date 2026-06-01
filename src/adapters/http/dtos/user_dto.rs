@@ -28,8 +28,6 @@ pub struct UserResponseDTO {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct AuthResponseDTO {
     pub user: UserResponseDTO,
-    pub access: String,
-    pub refresh: String,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -59,13 +57,5 @@ pub struct UpdatePasswordDTO {
     pub code: i32,
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct RefreshRequestDTO {
-    pub refresh_token: String,
-}
-
 #[derive(Debug, Serialize, ToSchema)]
-pub struct RefreshResponseDTO {
-    pub access: String,
-    pub refresh: String,
-}
+pub struct RefreshResponseDTO {}

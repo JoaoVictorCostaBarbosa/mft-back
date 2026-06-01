@@ -5,7 +5,7 @@ mod db;
 mod domain;
 mod infrastructure;
 use crate::{
-    adapters::http::routers::build_http,
+    adapters::http::{cookies::CookieConfig, routers::build_http},
     api_doc::ApiDoc,
     application::app_state::app_state::AppState,
     domain::services::{cripto::CriptoService, jwt::JwtProvider},
@@ -19,8 +19,8 @@ use crate::{
         },
     },
 };
-use axum::Router;
 use axum::http::{HeaderValue, Method, header};
+use axum::{Extension, Router};
 use db::create_pool;
 use std::sync::Arc;
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -41,9 +41,9 @@ async fn main() {
     println!("INFO sqlx::pool: connection established");
 
     sqlx::migrate!("./migrations")
-    .run(&pool)
-    .await
-    .expect("Failed to run migrations");
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
 
     let repos = RepositoryBundle::new(pool.clone());
 
@@ -83,6 +83,8 @@ async fn main() {
         r2_service,
         env.refresh_days,
     );
+    let cookie_config =
+        CookieConfig::new(env.app_development, env.access_minutes, env.refresh_days);
 
     let cors_origins: Vec<HeaderValue> = env
         .cors_allowed_origins
@@ -104,19 +106,24 @@ async fn main() {
             Method::DELETE,
             Method::OPTIONS,
         ])
-        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE]);
+        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE])
+        .allow_credentials(true);
 
     let app = Router::new()
         .route("/", axum::routing::get(root))
         .merge(build_http())
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
+        .layer(Extension(cookie_config))
         .layer(cors)
         .with_state(app_state);
 
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], env.port));
     println!("INFO server: running on {}", addr);
 
-    println!("API documentation in: http://localhost:{}/swagger-ui", env.port);
+    println!(
+        "API documentation in: http://localhost:{}/swagger-ui",
+        env.port
+    );
 
     axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app)
         .await
