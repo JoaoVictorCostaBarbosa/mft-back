@@ -1,9 +1,10 @@
 use crate::{
-    adapters::http::errors::http_error::HttpError,
+    adapters::http::{cookies::ACCESS_TOKEN_COOKIE, errors::http_error::HttpError},
     application::app_state::app_state::AppState,
     domain::{auth::token_data::AccessTokenData, errors::domain_error::DomainError},
 };
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
+use axum_extra::extract::cookie::CookieJar;
 
 pub struct AuthClaims(pub AccessTokenData);
 
@@ -15,21 +16,13 @@ impl FromRequestParts<AppState> for AuthClaims {
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        let auth_header = parts
-            .headers
-            .get("Authorization")
-            .and_then(|h| h.to_str().ok())
+        let jar = CookieJar::from_headers(&parts.headers);
+        let token = jar
+            .get(ACCESS_TOKEN_COOKIE)
+            .map(|cookie| cookie.value())
             .ok_or(HttpError(DomainError::Jwt(
                 crate::domain::errors::jwt_error::JwtError::MissingClaim,
             )))?;
-
-        if !auth_header.starts_with("Bearer ") {
-            return Err(HttpError(DomainError::Jwt(
-                crate::domain::errors::jwt_error::JwtError::MissingClaim,
-            )));
-        }
-
-        let token = auth_header.trim_start_matches("Bearer ").trim();
 
         let claims = state
             .jwt_service

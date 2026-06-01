@@ -28,7 +28,8 @@ regex = "1.12.2"
 argon2 = "0.5.3"
 rand = "0.8"
 lettre = "0.11.19"
-axum-extra = { version = "0.9", features = ["multipart"] }
+axum-extra = { version = "0.9", features = ["cookie", "multipart"] }
+cookie = "0.18"
 aws-sdk-s3 = "1.117.0"
 sha2 = "0.10"
 hmac = "0.12"
