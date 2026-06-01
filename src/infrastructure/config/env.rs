@@ -1,6 +1,7 @@
 use std::env;
 
 pub struct LoadEnv {
+    pub smtp_from: Option<String>,
     pub port: u16,
     pub app_development: bool,
     pub cors_allowed_origins: Vec<String>,
@@ -29,6 +30,7 @@ pub struct LoadEnv {
 impl LoadEnv {
     pub fn new() -> Self {
         Self {
+            smtp_from: env::var("SMTP_FROM").ok(),
             port: env_var_parse("PORT"),
             app_development: env_var_parse_bool_default("APP_DEVELOPMENT", false),
             cors_allowed_origins: env_var_list_default(
