@@ -112,10 +112,10 @@ async fn main() {
         .layer(cors)
         .with_state(app_state);
 
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], env.port));
     println!("INFO server: running on {}", addr);
 
-    println!("API documentation in: http://localhost:3000/swagger-ui");
+    println!("API documentation in: http://localhost:{}/swagger-ui", env.port);
 
     axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app)
         .await
