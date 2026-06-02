@@ -10,7 +10,7 @@ pub struct BodyHeight(f32);
 pub enum BodyHeightError {
     #[error("height too small: {0}")]
     TooSmall(f32),
-    
+
     #[error("height too large {0}")]
     TooLarge(f32),
 }

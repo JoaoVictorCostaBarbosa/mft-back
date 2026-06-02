@@ -130,53 +130,61 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
     ) -> Result<(), DomainError> {
         let mut qb = QueryBuilder::new("UPDATE exercise SET ");
         let mut separated = false;
-    
+
         if let Some(name) = fields.name {
-            if separated { qb.push(", "); }
+            if separated {
+                qb.push(", ");
+            }
             qb.push("name = ");
             qb.push_bind(name);
             separated = true;
         }
-    
+
         if let Some(exercise_type) = fields.exercise_type {
-            if separated { qb.push(", "); }
+            if separated {
+                qb.push(", ");
+            }
             qb.push("exercise_type = ");
             qb.push_bind(ExerciseTypeDb::from(exercise_type));
             separated = true;
         }
-    
+
         if let Some(equipment) = fields.equipment {
-            if separated { qb.push(", "); }
+            if separated {
+                qb.push(", ");
+            }
             qb.push("equipment = ");
             qb.push_bind(EquipmentDb::from(equipment));
             separated = true;
         }
-    
+
         if let Some(muscle_group) = fields.muscle_group {
-            if separated { qb.push(", "); }
+            if separated {
+                qb.push(", ");
+            }
             qb.push("muscle_group = ");
             qb.push_bind(MuscleGroupDb::from(muscle_group));
             separated = true;
         }
-        
+
         if !separated {
             return Err(RepositoryError::DbError("invalid update".to_string()).into());
         }
-    
+
         qb.push(" WHERE deleted_at IS NULL AND id = ");
         qb.push_bind(fields.id);
-    
+
         if let Some(user_id) = user_id {
             qb.push(" AND user_id = ");
             qb.push_bind(user_id);
         }
-    
+
         let result = qb.build().execute(&self.pool).await?;
-    
+
         if result.rows_affected() != 1 {
             return Err(RepositoryError::NotFound("exercise not found".to_string()).into());
         }
-    
+
         Ok(())
     }
 
@@ -185,8 +193,8 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
             r#"
             UPDATE exercise
             SET deleted_at = $1
-            WHERE id = $2 
-                AND user_id = $3 
+            WHERE id = $2
+                AND user_id = $3
                 AND deleted_at IS NULL
             "#,
         )
@@ -195,11 +203,11 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
         .bind(user_id)
         .execute(&self.pool)
         .await?;
-        
+
         if result.rows_affected() != 1 {
             return Err(RepositoryError::NotFound("exercise not found".to_string()).into());
         }
-        
+
         Ok(())
     }
 
@@ -213,11 +221,38 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
         .bind(id)
         .execute(&self.pool)
         .await?;
-        
+
         if result.rows_affected() != 1 {
             return Err(RepositoryError::NotFound("exercise not found".to_string()).into());
         }
-        
+
         Ok(())
+    }
+
+    async fn read_by_id(&self, exercise_id: Uuid) -> Result<Exercise, DomainError> {
+        let result = sqlx::query_as!(
+            ExerciseModel,
+            r#"
+            SELECT
+                id,
+                user_id,
+                name,
+                exercise_type AS "exercise_type: ExerciseTypeDb",
+                equipment     AS "equipment: EquipmentDb",
+                muscle_group  AS "muscle_group: MuscleGroupDb",
+                created_at,
+                deleted_at
+            FROM exercise
+            WHERE deleted_at IS NULL
+                AND id = $1
+            "#,
+            exercise_id,
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        let exercise: Exercise = result.try_into()?;
+
+        Ok(exercise)
     }
 }

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE workout_plan\n            SET name = $1,\n                updated_at = $2\n            WHERE deleted_at IS NULL\n                AND id = $3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "348d71f175c64c7fcc25ce42f123caaf6fd76d6c8063ec8bd8ced56baea34939"
+}

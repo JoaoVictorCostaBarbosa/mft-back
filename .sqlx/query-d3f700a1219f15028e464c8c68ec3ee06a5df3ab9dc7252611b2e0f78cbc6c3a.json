@@ -1,0 +1,107 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                e.id,\n                e.user_id,\n                e.name,\n                e.exercise_type AS \"exercise_type: ExerciseTypeDb\",\n                e.equipment     AS \"equipment: EquipmentDb\",\n                e.muscle_group  AS \"muscle_group: MuscleGroupDb\",\n                e.created_at,\n                e.deleted_at\n            FROM exercise e\n            JOIN workout_exercise we\n                ON we.exercise_id = e.id\n            WHERE we.workout_id = $1\n              AND e.deleted_at IS NULL\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "exercise_type: ExerciseTypeDb",
+        "type_info": {
+          "Custom": {
+            "name": "exercise_type_enum",
+            "kind": {
+              "Enum": [
+                "strength",
+                "cardio",
+                "flexibility",
+                "balance"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "equipment: EquipmentDb",
+        "type_info": {
+          "Custom": {
+            "name": "equipment_enum",
+            "kind": {
+              "Enum": [
+                "barbell",
+                "dumbbell",
+                "machine",
+                "bodyweight",
+                "kettlebell",
+                "resistance_band",
+                "other"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "muscle_group: MuscleGroupDb",
+        "type_info": {
+          "Custom": {
+            "name": "muscle_group_enum",
+            "kind": {
+              "Enum": [
+                "chest",
+                "back",
+                "shoulders",
+                "arms",
+                "legs",
+                "core",
+                "full_body",
+                "other"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "deleted_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "d3f700a1219f15028e464c8c68ec3ee06a5df3ab9dc7252611b2e0f78cbc6c3a"
+}

@@ -4,7 +4,7 @@ CREATE TABLE "workout_plan" (
   "id" uuid PRIMARY KEY,
   "user_id" uuid NOT NULL,
   "name" varchar(100) NOT NULL,
-  "created_at" timestamptz DEFAULT current_timestamp,
+  "created_at" timestamptz DEFAULT current_timestamp NOT NULL,
   "updated_at" timestamptz,
   "deleted_at" timestamptz,
 

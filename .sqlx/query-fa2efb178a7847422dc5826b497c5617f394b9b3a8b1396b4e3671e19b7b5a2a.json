@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO workout_exercise\n            (workout_id, exercise_id)\n            VALUES($1, $2)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fa2efb178a7847422dc5826b497c5617f394b9b3a8b1396b4e3671e19b7b5a2a"
+}

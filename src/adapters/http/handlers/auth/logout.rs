@@ -1,15 +1,46 @@
 use crate::{
-    adapters::http::{dtos::user_dto::RefreshRequestDTO, errors::http_error::HttpError},
+    adapters::http::{
+        cookies::{CookieConfig, REFRESH_TOKEN_COOKIE},
+        errors::http_error::HttpError,
+    },
     application::app_state::app_state::AppState,
+    domain::{errors::domain_error::DomainError, errors::jwt_error::JwtError},
 };
-use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
+use axum::{
+    extract::{Extension, State},
+    http::StatusCode,
+    response::IntoResponse,
+};
+use axum_extra::extract::cookie::CookieJar;
 
+#[utoipa::path{
+    patch,
+    path = "/api/auth/logout",
+    responses(
+        (status = 200, description = "logout successful"),
+        (status = 401, description = "unauthorized"),
+        (status = 500, description = "internal server error"),
+    ),
+    tag = "Auth"
+}]
 pub async fn logout_handler(
     State(state): State<AppState>,
-    Json(token): Json<RefreshRequestDTO>,
+    Extension(cookie_config): Extension<CookieConfig>,
+    jar: CookieJar,
 ) -> impl IntoResponse {
-    match state.auth.logout.execute(token.refresh_token).await {
-        Ok(_) => StatusCode::OK.into_response(),
+    let refresh_token = match jar.get(REFRESH_TOKEN_COOKIE) {
+        Some(cookie) => cookie.value().to_string(),
+        None => {
+            return HttpError(DomainError::Jwt(JwtError::MissingClaim)).into_response();
+        }
+    };
+
+    match state.auth.logout.execute(refresh_token).await {
+        Ok(_) => {
+            let jar = cookie_config.clear_auth_cookies(jar);
+
+            (StatusCode::OK, jar).into_response()
+        }
         Err(e) => HttpError(e).into_response(),
     }
 }

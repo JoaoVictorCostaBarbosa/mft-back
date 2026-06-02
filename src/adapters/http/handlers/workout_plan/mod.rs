@@ -1,0 +1,10 @@
+pub mod add_workout_template_to_wp;
+pub mod create_wp;
+pub mod delete_wp;
+pub mod find_current_wp_user;
+pub mod find_wp_by_id;
+pub mod read_user_wp_summary;
+pub mod remove_workout_template_from_wp;
+pub mod set_current_workout_plan;
+pub mod soft_delete_wp;
+pub mod update_wp_name;

@@ -1,7 +1,7 @@
 use crate::{
     application::{
-        resources::pending_user::PendingUser,
         interfaces::pending_user_repository::PendingUserRepository,
+        resources::pending_user::PendingUser,
     },
     domain::errors::repository_error::RepositoryError,
     infrastructure::repositories::models::pending_user_model::PendingUserModel,
@@ -39,13 +39,16 @@ impl PendingUserRepository for PendingUserRepositorySqlx {
         .execute(&self.pool)
         .await
         .map_err(RepositoryError::from)?;
-        
+
         Ok(())
     }
 
-    async fn get_valid_pending_user_by_email(&self, email: &str) -> Result<PendingUser, RepositoryError> {
+    async fn get_valid_pending_user_by_email(
+        &self,
+        email: &str,
+    ) -> Result<PendingUser, RepositoryError> {
         self.clear_expired_pending_user().await?;
-        
+
         let pending_user = sqlx::query_as::<_, PendingUserModel>(
             r#"
             SELECT * FROM pending_users

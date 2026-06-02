@@ -7,5 +7,5 @@ pub enum MuscleGroup {
     Legs,
     Core,
     FullBody,
-    Other
+    Other,
 }

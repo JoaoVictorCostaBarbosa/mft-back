@@ -1,22 +1,23 @@
 use crate::{
     adapters::http::{
-        dtos::user_dto::VerifyRequestDTO, errors::http_error::HttpError,
+        cookies::CookieConfig, dtos::user_dto::VerifyRequestDTO, errors::http_error::HttpError,
         mappers::user_mapper::UserMappers,
     },
     application::app_state::app_state::AppState,
 };
 use axum::{
-    extract::{Json, State},
+    extract::{Extension, Json, State},
     http::StatusCode,
     response::IntoResponse,
 };
+use axum_extra::extract::cookie::CookieJar;
 
 #[utoipa::path{
     post,
     path = "/api/auth/verify",
     request_body = VerifyRequestDTO,
     responses(
-        (status = 201, description = "create user", body = AuthResponseDTO),
+        (status = 200, description = "create user", body = AuthResponseDTO),
         (status = 422, description = "unprocessable entity"),
         (status = 500, description = "internal server error"),
     ),
@@ -24,6 +25,8 @@ use axum::{
 }]
 pub async fn verify_user_handler(
     State(state): State<AppState>,
+    Extension(cookie_config): Extension<CookieConfig>,
+    jar: CookieJar,
     Json(request): Json<VerifyRequestDTO>,
 ) -> impl IntoResponse {
     let mapper = UserMappers;
@@ -47,7 +50,8 @@ pub async fn verify_user_handler(
         Err(e) => return HttpError(e.into()).into_response(),
     };
 
-    let response = mapper.to_auth_response_dto(user, access, refresh);
+    let response = mapper.to_auth_response_dto(user);
+    let jar = cookie_config.add_auth_cookies(jar, access, refresh);
 
-    (StatusCode::OK, Json(response)).into_response()
+    (StatusCode::OK, jar, Json(response)).into_response()
 }

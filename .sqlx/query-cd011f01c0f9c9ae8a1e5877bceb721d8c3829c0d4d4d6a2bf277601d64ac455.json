@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n              wp.id,\n              wp.user_id,\n              wp.name,\n              wp.created_at,\n              wp.updated_at,\n              wp.deleted_at\n            FROM current_workout_plan cwp\n            JOIN workout_plan wp\n              ON wp.id = cwp.workout_plan_id\n            WHERE cwp.user_id = $1\n              AND wp.deleted_at IS NULL;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "deleted_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "cd011f01c0f9c9ae8a1e5877bceb721d8c3829c0d4d4d6a2bf277601d64ac455"
+}

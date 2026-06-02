@@ -6,6 +6,8 @@ use crate::{
     domain::repositories::{
         exercise_repository::ExerciseRepository, measurement_repository::MeasurementRepository,
         refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
+        workout_plan_repository::WorkoutPlanRepository,
+        workout_template_repository::WorkoutTemplateRepository,
     },
     infrastructure::repositories::postgres::{
         exercise_repository_sqlx::ExerciseRepositorySqlx,
@@ -14,6 +16,8 @@ use crate::{
         pending_user_repository_sqlx::PendingUserRepositorySqlx,
         refresh_token_repository_sqlx::RefreshTokenRepositorySqlx,
         user_repository_sqlx::UserRepositorySQLx,
+        workout_plan_repository_sqlx::WorkoutPlanRepositorySQLx,
+        workout_template_repository_sqlx::WorkoutTemplateRepositorySQLX,
     },
 };
 use sqlx::PgPool;
@@ -26,6 +30,8 @@ pub mod pending_change_repository_sqlx;
 pub mod pending_user_repository_sqlx;
 pub mod refresh_token_repository_sqlx;
 pub mod user_repository_sqlx;
+pub mod workout_plan_repository_sqlx;
+pub mod workout_template_repository_sqlx;
 
 pub struct RepositoryBundle {
     pub user_repo: Arc<dyn UserRepository>,
@@ -34,6 +40,8 @@ pub struct RepositoryBundle {
     pub pending_change_repo: Arc<dyn PendingChangesRepository>,
     pub measurement_repo: Arc<dyn MeasurementRepository>,
     pub exercise_repo: Arc<dyn ExerciseRepository>,
+    pub workout_plan_repo: Arc<dyn WorkoutPlanRepository>,
+    pub workout_template_repo: Arc<dyn WorkoutTemplateRepository>,
 }
 
 impl RepositoryBundle {
@@ -45,6 +53,8 @@ impl RepositoryBundle {
             pending_change_repo: Arc::new(PendingChangeRepositorySqlx::new(pool.clone())),
             measurement_repo: Arc::new(MeasurementRepositorySqlx::new(pool.clone())),
             exercise_repo: Arc::new(ExerciseRepositorySqlx::new(pool.clone())),
+            workout_plan_repo: Arc::new(WorkoutPlanRepositorySQLx::new(pool.clone())),
+            workout_template_repo: Arc::new(WorkoutTemplateRepositorySQLX::new(pool.clone())),
         }
     }
 }

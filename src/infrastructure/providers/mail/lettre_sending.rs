@@ -19,26 +19,28 @@ impl LettreSmtpService {
         user: String,
         pass: String,
         from: Option<String>,
-    ) -> Result<Self, SmtpError> {
+    ) -> Self {
         let from = from.unwrap_or_else(|| user.clone());
 
         let creds = Credentials::new(user.clone(), pass);
 
         let mailer = if secure {
             SmtpTransport::relay(&host)
-                .map_err(|e| SmtpError::Config(e.to_string()))?
+                .map_err(|e| SmtpError::Config(e.to_string()))
+                .expect("Failed to initialize SMTP service")
                 .port(port)
                 .credentials(creds)
                 .build()
         } else {
             SmtpTransport::starttls_relay(&host)
-                .map_err(|e| SmtpError::Config(e.to_string()))?
+                .map_err(|e| SmtpError::Config(e.to_string()))
+                .expect("Failed to initialize SMTP service")
                 .port(port)
                 .credentials(creds)
                 .build()
         };
 
-        Ok(Self { mailer, from })
+        Self { mailer, from }
     }
 }
 

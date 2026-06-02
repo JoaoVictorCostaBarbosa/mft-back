@@ -1,10 +1,8 @@
-use crate::{
-    domain::{
-        entities::user::User,
-        enums::role::Role,
-        errors::{domain_error::DomainError, permission_error::PermissionError},
-        repositories::user_repository::UserRepository,
-    },
+use crate::domain::{
+    entities::user::User,
+    enums::role::Role,
+    errors::{domain_error::DomainError, permission_error::PermissionError},
+    repositories::user_repository::UserRepository,
 };
 use std::sync::Arc;
 

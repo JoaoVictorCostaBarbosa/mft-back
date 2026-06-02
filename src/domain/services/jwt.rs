@@ -1,7 +1,5 @@
 use crate::domain::{
-    auth::token_data::{AccessTokenData},
-    enums::role::Role,
-    errors::jwt_error::JwtError,
+    auth::token_data::AccessTokenData, enums::role::Role, errors::jwt_error::JwtError,
 };
 
 pub trait JwtProvider: Send + Sync + 'static {

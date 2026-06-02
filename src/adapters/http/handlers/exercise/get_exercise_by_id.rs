@@ -13,6 +13,23 @@ use axum::{
 };
 use uuid::Uuid;
 
+#[utoipa::path{
+    get,
+    path = "/api/exercises/{id}",
+    params(
+        ("id" = Uuid, description = "Exercise ID", example = "b728b759-4d32-4148-936e-d9036c071d72"),
+    ),
+    responses(
+        (status = 200, description = "Exercise found", body = ExerciseResponseDTO),
+        (status = 403, description = "denied permission"),
+        (status = 404, description = "not found"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Exercises"
+}]
 pub async fn get_exercise_by_id_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,

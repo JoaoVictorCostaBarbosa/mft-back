@@ -11,6 +11,22 @@ use axum::{
     response::IntoResponse,
 };
 
+#[utoipa::path{
+    patch,
+    path = "/api/users/me/email",
+    request_body = UpdateEmailDTO,
+    responses(
+        (status = 200, description = "Email updated", body = UserResponseDTO),
+        (status = 403, description = "denied permission"),
+        (status = 404, description = "not found"),
+        (status = 422, description = "unprocessable entity"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Users"
+}]
 pub async fn update_email_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,

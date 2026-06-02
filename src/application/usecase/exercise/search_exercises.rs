@@ -26,7 +26,7 @@ impl SearchExercises {
         if equipment.is_none() && muscle_group.is_none() && exercise_type.is_none() {
             return Err(ExerciseError::InvalidFieldsCriteria.into());
         }
-        
+
         let exercises = self
             .exercise_repo
             .get_exercises(ExerciseFilterFields {

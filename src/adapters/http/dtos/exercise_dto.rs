@@ -15,7 +15,7 @@ pub struct ExerciseRequest {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
-pub struct ExerciseResponse {
+pub struct ExerciseResponseDTO {
     pub id: Uuid,
     pub name: String,
     pub exercise_type: ExerciseTypeDTO,

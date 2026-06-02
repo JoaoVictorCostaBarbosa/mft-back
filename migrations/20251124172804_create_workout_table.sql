@@ -1,10 +1,10 @@
 -- Add migration script here
 
-CREATE TABLE "workout" (
+CREATE TABLE "workout_template" (
   "id" uuid PRIMARY KEY,
   "user_id" uuid NOT NULL,
   "name" varchar(100) NOT NULL,
-  "created_at" timestamptz DEFAULT current_timestamp,
+  "created_at" timestamptz DEFAULT current_timestamp NOT NULL,
   "updated_at" timestamptz,
   "deleted_at" timestamptz,
 

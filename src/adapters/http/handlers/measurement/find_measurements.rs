@@ -7,6 +7,19 @@ use crate::{
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
+#[utoipa::path{
+    get,
+    path = "/api/measurements",
+    responses(
+        (status = 200, description = "Measurements found", body = [MeasurementResponse]),
+        (status = 403, description = "denied permission"),
+        (status = 500, description = "internal server error"),
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Measurements"
+}]
 pub async fn find_measurements_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
