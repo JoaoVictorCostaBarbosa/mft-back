@@ -250,4 +250,49 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
 
         Ok(())
     }
+
+    async fn find_current_user_plan(&self, user_id: Uuid) -> Result<WorkoutPlan, DomainError> {
+        let result = sqlx::query_as!(
+            WorkoutPlanRowModel,
+            r#"
+            SELECT
+              wp.id,
+              wp.user_id,
+              wp.name,
+              wp.created_at,
+              wp.updated_at,
+              wp.deleted_at
+            FROM current_workout_plan cwp
+            JOIN workout_plan wp
+              ON wp.id = cwp.workout_plan_id
+            WHERE cwp.user_id = $1
+              AND wp.deleted_at IS NULL;
+            "#,
+            user_id
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        let wts = self.load_workout_templates(result.id).await?;
+
+        Ok(to_workout_plan_entity(result, wts)?)
+    }
+
+    async fn set_current(&self, user_id: Uuid, wp_id: Uuid) -> Result<(), DomainError> {
+        sqlx::query(
+            r#"
+            INSERT INTO current_workout_plan
+            (user_id, workout_plan_id)
+            VALUES ($1, $2)
+            ON CONFLICT (user_id)
+            DO UPDATE SET workout_plan_id = EXCLUDED.workout_plan_id
+            "#,
+        )
+        .bind(user_id)
+        .bind(wp_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
 }

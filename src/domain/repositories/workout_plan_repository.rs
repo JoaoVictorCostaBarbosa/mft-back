@@ -14,6 +14,8 @@ pub trait WorkoutPlanRepository: Send + Sync {
         filter: WorkoutPlanFilterFields,
     ) -> Result<Vec<WorkoutPlanSummary>, DomainError>;
     async fn find_by_id(&self, workout_plan_id: Uuid) -> Result<WorkoutPlan, DomainError>;
+    async fn find_current_user_plan(&self, user_id: Uuid) -> Result<WorkoutPlan, DomainError>;
+    async fn set_current(&self, user_id: Uuid, wp_id: Uuid) -> Result<(), DomainError>;
     async fn update(&self, workout_plan: &WorkoutPlan) -> Result<(), DomainError>;
     async fn delete(&self, workout_plan_id: Uuid) -> Result<(), DomainError>;
     async fn soft_delete(&self, workout_plan_id: Uuid) -> Result<(), DomainError>;
