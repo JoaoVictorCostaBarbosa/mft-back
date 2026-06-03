@@ -1,6 +1,6 @@
 use crate::domain::{
     commands::exercise_commands::{ExerciseFilterFields, ExerciseUpdateFields},
-    entities::exercise::Exercise,
+    entities::{exercise::Exercise, pagination::Paginated},
     errors::domain_error::DomainError,
 };
 use axum::async_trait;
@@ -12,7 +12,7 @@ pub trait ExerciseRepository: Send + Sync + 'static {
     async fn get_exercises(
         &self,
         fields: ExerciseFilterFields,
-    ) -> Result<Vec<Exercise>, DomainError>;
+    ) -> Result<Paginated<Exercise>, DomainError>;
     async fn read_by_id(&self, exercise_id: Uuid) -> Result<Exercise, DomainError>;
     async fn update_exercise(
         &self,

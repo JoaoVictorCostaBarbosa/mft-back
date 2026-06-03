@@ -19,6 +19,23 @@ pub struct ExerciseFilterFields {
     pub equipment: Option<Equipment>,
     pub exercise_type: Option<ExerciseType>,
     pub muscle_group: Option<MuscleGroup>,
+    pub pagination: Option<ExercisePaginationFields>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ExercisePaginationFields {
+    pub page: u32,
+    pub per_page: u32,
+}
+
+impl ExercisePaginationFields {
+    pub fn limit(&self) -> i64 {
+        self.per_page as i64
+    }
+
+    pub fn offset(&self) -> i64 {
+        ((self.page - 1) * self.per_page) as i64
+    }
 }
 
 impl ExerciseUpdateFields {
