@@ -1,9 +1,7 @@
 use crate::{
     application::dtos::workout_plan::WorkoutPlanRequest,
     domain::{
-        entities::{
-            user::User, workout_plan::WorkoutPlan, workout_template::WorkoutTemplateSummary,
-        },
+        entities::{user::User, workout_plan::WorkoutPlan},
         errors::domain_error::DomainError,
         repositories::workout_plan_repository::WorkoutPlanRepository,
     },
@@ -24,11 +22,11 @@ impl CreateWorkoutPlan {
         current_user: User,
         workout_plan_request: WorkoutPlanRequest,
     ) -> Result<WorkoutPlan, DomainError> {
-        let workout_templates: Vec<WorkoutTemplateSummary> = vec![];
         let workout_plan = WorkoutPlan::new(
             current_user.id,
             workout_plan_request.name,
-            workout_templates,
+            workout_plan_request.routine_mode,
+            vec![],
         )?;
 
         self.workout_plan_repo.save(&workout_plan).await?;

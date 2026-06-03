@@ -1,6 +1,6 @@
 use crate::domain::{
     commands::workout_plan_command::WorkoutPlanFilterFields,
-    entities::workout_plan::{WorkoutPlan, WorkoutPlanSummary},
+    entities::workout_plan::{WorkoutPlan, WorkoutPlanRoutineItem, WorkoutPlanSummary},
     errors::domain_error::DomainError,
 };
 use axum::async_trait;
@@ -19,10 +19,10 @@ pub trait WorkoutPlanRepository: Send + Sync {
     async fn update(&self, workout_plan: &WorkoutPlan) -> Result<(), DomainError>;
     async fn delete(&self, workout_plan_id: Uuid) -> Result<(), DomainError>;
     async fn soft_delete(&self, workout_plan_id: Uuid) -> Result<(), DomainError>;
-    async fn add_workout_template(
+    async fn add_routine_item(
         &self,
+        routine_item: &WorkoutPlanRoutineItem,
         workout_plan_id: Uuid,
-        workout_template_id: Uuid,
     ) -> Result<(), DomainError>;
     async fn remove_workout_template(
         &self,

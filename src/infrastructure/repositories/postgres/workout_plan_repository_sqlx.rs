@@ -1,15 +1,13 @@
 use crate::{
     domain::{
         commands::workout_plan_command::WorkoutPlanFilterFields,
-        entities::workout_plan::{WorkoutPlan, WorkoutPlanSummary},
+        entities::workout_plan::{WorkoutPlan, WorkoutPlanRoutineItem, WorkoutPlanSummary},
         errors::{domain_error::DomainError, repository_error::RepositoryError},
         repositories::workout_plan_repository::WorkoutPlanRepository,
     },
     infrastructure::repositories::{
-        models::{
-            workout_plan_model::WorkoutPlanRowModel,
-            workout_template_model::WorkoutTemplateRowModel,
-        },
+        enums_db::{day_of_week_db::DayOfWeekDb, routine_item_type_db::RoutineItemTypeDb},
+        models::workout_plan_model::{WorkoutPlanRoutineItemRowModel, WorkoutPlanRowModel},
         repo_mapper::wp_repo_mapper::{
             to_workout_plan_entity, to_workout_plan_row_model, to_workout_plan_summary,
         },
@@ -32,25 +30,26 @@ impl WorkoutPlanRepositorySQLx {
     async fn load_workout_templates(
         &self,
         workout_plan_id: Uuid,
-    ) -> Result<Vec<WorkoutTemplateRowModel>, DomainError> {
-        let result = sqlx::query_as!(
-            WorkoutTemplateRowModel,
+    ) -> Result<Vec<WorkoutPlanRoutineItemRowModel>, DomainError> {
+        let result = sqlx::query_as::<_, WorkoutPlanRoutineItemRowModel>(
             r#"
             SELECT
-                wt.id,
-                wt.user_id,
-                wt.name,
-                wt.created_at,
-                wt.updated_at,
-                wt.deleted_at
-            FROM workout_template wt
-            JOIN workout_template_in_plan wtp
-                ON wt.id = wtp.workout_template_id
-            WHERE wtp.workout_plan_id = $1
+                wpri.id,
+                wpri.item_type,
+                wt.id AS workout_template_id,
+                wt.user_id AS workout_template_user_id,
+                wt.name AS workout_template_name,
+                wpri.day_of_week,
+                wpri.position
+            FROM workout_plan_routine_item wpri
+            LEFT JOIN workout_template wt
+                ON wt.id = wpri.workout_template_id
                 AND wt.deleted_at IS NULL
+            WHERE wpri.workout_plan_id = $1
+            ORDER BY wpri.day_of_week NULLS LAST, wpri.position NULLS LAST
             "#,
-            workout_plan_id
         )
+        .bind(workout_plan_id)
         .fetch_all(&self.pool)
         .await?;
 
@@ -63,19 +62,20 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
     async fn save(&self, workout_plan: &WorkoutPlan) -> Result<(), DomainError> {
         let wp = to_workout_plan_row_model(workout_plan);
 
-        sqlx::query!(
+        sqlx::query(
             r#"
             INSERT INTO workout_plan
-            (id, user_id, name, created_at, updated_at, deleted_at)
-            VALUES($1, $2, $3, $4, $5, $6)
+            (id, user_id, name, routine_mode, created_at, updated_at, deleted_at)
+            VALUES($1, $2, $3, $4, $5, $6, $7)
             "#,
-            wp.id,
-            wp.user_id,
-            wp.name,
-            wp.created_at,
-            wp.updated_at,
-            wp.deleted_at
         )
+        .bind(wp.id)
+        .bind(wp.user_id)
+        .bind(wp.name)
+        .bind(wp.routine_mode)
+        .bind(wp.created_at)
+        .bind(wp.updated_at)
+        .bind(wp.deleted_at)
         .execute(&self.pool)
         .await?;
 
@@ -92,6 +92,7 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
                 id,
                 user_id,
                 name,
+                routine_mode,
                 created_at,
                 updated_at,
                 deleted_at
@@ -120,13 +121,13 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
     }
 
     async fn find_by_id(&self, workout_plan_id: Uuid) -> Result<WorkoutPlan, DomainError> {
-        let result = sqlx::query_as!(
-            WorkoutPlanRowModel,
+        let result = sqlx::query_as::<_, WorkoutPlanRowModel>(
             r#"
             SELECT
                 id,
                 user_id,
                 name,
+                routine_mode,
                 created_at,
                 updated_at,
                 deleted_at
@@ -134,8 +135,8 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
             WHERE deleted_at IS NULL
                 AND id = $1
             "#,
-            workout_plan_id
         )
+        .bind(workout_plan_id)
         .fetch_one(&self.pool)
         .await?;
 
@@ -147,7 +148,7 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
     }
 
     async fn update(&self, workout_plan: &WorkoutPlan) -> Result<(), DomainError> {
-        let result = sqlx::query!(
+        let result = sqlx::query(
             r#"
             UPDATE workout_plan
             SET name = $1,
@@ -155,10 +156,10 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
             WHERE deleted_at IS NULL
                 AND id = $3
             "#,
-            workout_plan.name.value(),
-            workout_plan.updated_at,
-            workout_plan.id
         )
+        .bind(workout_plan.name.value())
+        .bind(workout_plan.updated_at)
+        .bind(workout_plan.id)
         .execute(&self.pool)
         .await?;
 
@@ -172,7 +173,7 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
     async fn soft_delete(&self, workout_plan_id: Uuid) -> Result<(), DomainError> {
         let now = Utc::now();
 
-        let result = sqlx::query!(
+        let result = sqlx::query(
             r#"
             UPDATE workout_plan
             SET deleted_at = $1,
@@ -180,9 +181,9 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
             WHERE deleted_at IS NULL
                 AND id = $2
             "#,
-            now,
-            workout_plan_id
         )
+        .bind(now)
+        .bind(workout_plan_id)
         .execute(&self.pool)
         .await?;
 
@@ -194,13 +195,13 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
     }
 
     async fn delete(&self, workout_plan_id: Uuid) -> Result<(), DomainError> {
-        let result = sqlx::query!(
+        let result = sqlx::query(
             r#"
             DELETE FROM workout_plan
             WHERE id = $1
             "#,
-            workout_plan_id
         )
+        .bind(workout_plan_id)
         .execute(&self.pool)
         .await?;
 
@@ -211,20 +212,24 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
         Ok(())
     }
 
-    async fn add_workout_template(
+    async fn add_routine_item(
         &self,
+        routine_item: &WorkoutPlanRoutineItem,
         workout_plan_id: Uuid,
-        workout_template_id: Uuid,
     ) -> Result<(), DomainError> {
-        sqlx::query!(
+        sqlx::query(
             r#"
-            INSERT INTO workout_template_in_plan
-            (workout_plan_id, workout_template_id)
-            VALUES($1, $2)
+            INSERT INTO workout_plan_routine_item
+            (id, workout_plan_id, workout_template_id, item_type, day_of_week, position)
+            VALUES($1, $2, $3, $4, $5, $6)
             "#,
-            workout_plan_id,
-            workout_template_id
         )
+        .bind(routine_item.id)
+        .bind(workout_plan_id)
+        .bind(routine_item.workout_template.as_ref().map(|wt| wt.id))
+        .bind(RoutineItemTypeDb::from(routine_item.item_type))
+        .bind(routine_item.day_of_week.map(DayOfWeekDb::from))
+        .bind(routine_item.position.map(|position| position as i32))
         .execute(&self.pool)
         .await?;
 
@@ -236,15 +241,15 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
         workout_plan_id: Uuid,
         workout_template_id: Uuid,
     ) -> Result<(), DomainError> {
-        sqlx::query!(
+        sqlx::query(
             r#"
-            DELETE FROM workout_template_in_plan
+            DELETE FROM workout_plan_routine_item
             WHERE workout_plan_id = $1
                 AND workout_template_id = $2
             "#,
-            workout_plan_id,
-            workout_template_id
         )
+        .bind(workout_plan_id)
+        .bind(workout_template_id)
         .execute(&self.pool)
         .await?;
 
@@ -252,13 +257,13 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
     }
 
     async fn find_current_user_plan(&self, user_id: Uuid) -> Result<WorkoutPlan, DomainError> {
-        let result = sqlx::query_as!(
-            WorkoutPlanRowModel,
+        let result = sqlx::query_as::<_, WorkoutPlanRowModel>(
             r#"
             SELECT
               wp.id,
               wp.user_id,
               wp.name,
+              wp.routine_mode,
               wp.created_at,
               wp.updated_at,
               wp.deleted_at
@@ -268,8 +273,8 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
             WHERE cwp.user_id = $1
               AND wp.deleted_at IS NULL;
             "#,
-            user_id
         )
+        .bind(user_id)
         .fetch_one(&self.pool)
         .await?;
 
