@@ -1,3 +1,4 @@
+pub mod add_routine_item_to_wp;
 pub mod add_workout_template_to_wp;
 pub mod create_wp;
 pub mod delete_wp;

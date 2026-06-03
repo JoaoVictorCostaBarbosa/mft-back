@@ -1,14 +1,14 @@
 use crate::{
     domain::{
         entities::{
-            workout_plan::{WorkoutPlan, WorkoutPlanSummary},
+            workout_plan::{WorkoutPlan, WorkoutPlanRoutineItem, WorkoutPlanSummary},
             workout_template::WorkoutTemplateSummary,
         },
         errors::workout_plan_error::WorkoutPlanError,
         value_objects::name_vo::Name,
     },
-    infrastructure::repositories::models::{
-        workout_plan_model::WorkoutPlanRowModel, workout_template_model::WorkoutTemplateRowModel,
+    infrastructure::repositories::models::workout_plan_model::{
+        WorkoutPlanRoutineItemRowModel, WorkoutPlanRowModel,
     },
 };
 
@@ -17,6 +17,7 @@ pub fn to_workout_plan_row_model(wp: &WorkoutPlan) -> WorkoutPlanRowModel {
         id: wp.id,
         user_id: wp.user_id,
         name: wp.name.value().to_string(),
+        routine_mode: wp.routine_mode.into(),
         created_at: wp.created_at,
         updated_at: wp.updated_at,
         deleted_at: wp.deleted_at,
@@ -25,18 +26,40 @@ pub fn to_workout_plan_row_model(wp: &WorkoutPlan) -> WorkoutPlanRowModel {
 
 pub fn to_workout_plan_entity(
     wp: WorkoutPlanRowModel,
-    wts: Vec<WorkoutTemplateRowModel>,
+    wts: Vec<WorkoutPlanRoutineItemRowModel>,
 ) -> Result<WorkoutPlan, WorkoutPlanError> {
-    let workout_templates: Vec<WorkoutTemplateSummary> = wts
+    let routine_items: Vec<WorkoutPlanRoutineItem> = wts
         .into_iter()
-        .map(|wt| wt.try_into())
-        .collect::<Result<_, _>>()?;
+        .map(|wt| {
+            let workout_template = match (
+                wt.workout_template_id,
+                wt.workout_template_user_id,
+                wt.workout_template_name,
+            ) {
+                (Some(id), Some(user_id), Some(name)) => Some(WorkoutTemplateSummary {
+                    id,
+                    user_id,
+                    name: Name::new(name)?,
+                }),
+                _ => None,
+            };
+
+            Ok(WorkoutPlanRoutineItem {
+                id: wt.id,
+                item_type: wt.item_type.into(),
+                workout_template,
+                day_of_week: wt.day_of_week.map(Into::into),
+                position: wt.position.map(|position| position as u32),
+            })
+        })
+        .collect::<Result<_, WorkoutPlanError>>()?;
 
     Ok(WorkoutPlan {
         id: wp.id,
         user_id: wp.user_id,
         name: Name::new(wp.name)?,
-        workout_templates,
+        routine_mode: wp.routine_mode.into(),
+        routine_items,
         created_at: wp.created_at,
         updated_at: wp.updated_at,
         deleted_at: wp.deleted_at,
@@ -50,5 +73,6 @@ pub fn to_workout_plan_summary(
         id: wtr.id,
         user_id: wtr.user_id,
         name: Name::new(wtr.name)?,
+        routine_mode: wtr.routine_mode.into(),
     })
 }

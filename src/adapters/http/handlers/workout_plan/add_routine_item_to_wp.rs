@@ -1,9 +1,9 @@
-use crate::domain::enums::routine_item_type::RoutineItemType;
 use crate::{
     adapters::http::{
-        dtos::workout_plan::AddWorkoutTemplateToPlanRequestDTO, errors::http_error::HttpError,
+        dtos::workout_plan::AddRoutineItemToPlanRequestDTO,
+        errors::http_error::HttpError,
         extractors::current_user::CurrentUser,
-        mappers::workout_plan_mapper::to_optional_day_of_week,
+        mappers::workout_plan_mapper::{to_optional_day_of_week, to_routine_item_type},
     },
     application::app_state::app_state::AppState,
 };
@@ -17,16 +17,17 @@ use uuid::Uuid;
 
 #[utoipa::path{
     post,
-    path = "/api/workout-plans/{workout_plan_id}/workout-template/{workout_template_id}",
-    request_body = AddWorkoutTemplateToPlanRequestDTO,
+    path = "/api/workout-plans/{workout_plan_id}/routine-items",
+    request_body = AddRoutineItemToPlanRequestDTO,
     params(
         ("workout_plan_id" = Uuid, description = "Workout plan ID", example = "b728b759-4d32-4148-936e-d9036c071d72"),
-        ("workout_template_id" = Uuid, description = "Workout template ID", example = "b728b759-4d32-4148-936e-d9036c071d72"),
     ),
     responses(
-        (status = 204, description = "Workout template added to workout plan"),
+        (status = 204, description = "Routine item added to workout plan"),
         (status = 403, description = "denied permission"),
         (status = 404, description = "not found"),
+        (status = 409, description = "routine conflict"),
+        (status = 422, description = "invalid routine item"),
         (status = 500, description = "internal server error"),
     ),
     security(
@@ -34,12 +35,13 @@ use uuid::Uuid;
     ),
     tag = "Workout Plans"
 }]
-pub async fn add_workout_template_to_workout_plan_handler(
+pub async fn add_routine_item_to_workout_plan_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
-    Path((workout_plan_id, workout_template_id)): Path<(Uuid, Uuid)>,
-    Json(request): Json<AddWorkoutTemplateToPlanRequestDTO>,
+    Path(workout_plan_id): Path<Uuid>,
+    Json(request): Json<AddRoutineItemToPlanRequestDTO>,
 ) -> impl IntoResponse {
+    let item_type = to_routine_item_type(request.item_type);
     let day_of_week = to_optional_day_of_week(request.day_of_week);
 
     match state
@@ -48,8 +50,8 @@ pub async fn add_workout_template_to_workout_plan_handler(
         .execute(
             current_user,
             workout_plan_id,
-            Some(workout_template_id),
-            RoutineItemType::Workout,
+            request.workout_template_id,
+            item_type,
             day_of_week,
             request.position,
         )

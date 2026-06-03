@@ -1,5 +1,6 @@
 use crate::{
     adapters::http::handlers::workout_plan::{
+        add_routine_item_to_wp::add_routine_item_to_workout_plan_handler,
         add_workout_template_to_wp::add_workout_template_to_workout_plan_handler,
         create_wp::create_workout_plan_handler, delete_wp::delete_workout_plan_handler,
         find_current_wp_user::find_user_current_workout_plan,
@@ -51,6 +52,10 @@ pub fn workout_plan_routers() -> Router<AppState> {
         .route(
             "/workout-plans/:workout_plan_id/workout-template/:workout_template_id",
             post(add_workout_template_to_workout_plan_handler),
+        )
+        .route(
+            "/workout-plans/:workout_plan_id/routine-items",
+            post(add_routine_item_to_workout_plan_handler),
         )
         .route(
             "/workout-plans/:workout_plan_id/workout-template/:workout_template_id",

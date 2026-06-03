@@ -1,7 +1,7 @@
 use crate::domain::errors::{
     bucket_error::BucketError, cripto_error::CriptoError, domain_error::DomainError,
     file_error::FileError, jwt_error::JwtError, permission_error::PermissionError,
-    repository_error::RepositoryError, smtp_error::SmtpError,
+    repository_error::RepositoryError, smtp_error::SmtpError, workout_plan_error::WorkoutPlanError,
     workout_template_error::WorkoutTemplateError,
 };
 use axum::{
@@ -124,6 +124,71 @@ impl IntoResponse for HttpError {
             .into_response(),
 
             // ========================
+            // WORKOUT PLAN ERRORS
+            // ========================
+            DomainError::WorkoutPlan(err) => match err {
+                WorkoutPlanError::NameInvalid(e) => (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!({ "error": format!("invalid name: {}", e) })),
+                ),
+
+                WorkoutPlanError::AlreadyAdded => (
+                    StatusCode::CONFLICT,
+                    Json(json!({ "error": "workout template already added" })),
+                ),
+
+                WorkoutPlanError::DayAlreadyScheduled => (
+                    StatusCode::CONFLICT,
+                    Json(json!({ "error": "day of week already scheduled" })),
+                ),
+
+                WorkoutPlanError::PositionAlreadyScheduled => (
+                    StatusCode::CONFLICT,
+                    Json(json!({ "error": "position already scheduled" })),
+                ),
+
+                WorkoutPlanError::WorkoutTemplateRequired => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "workout template is required for workout routine items" })),
+                ),
+
+                WorkoutPlanError::RestCannotHaveWorkoutTemplate => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "rest routine items cannot have workout templates" })),
+                ),
+
+                WorkoutPlanError::WeeklyRoutineDoesNotUsePosition => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "weekly routines do not use position" })),
+                ),
+
+                WorkoutPlanError::WeeklyRoutineRequiresDayOfWeek => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "weekly routines require day of week" })),
+                ),
+
+                WorkoutPlanError::SequentialRoutineDoesNotUseDayOfWeek => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "sequential routines do not use day of week" })),
+                ),
+
+                WorkoutPlanError::SequentialRoutineRequiresPosition => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "sequential routines require position" })),
+                ),
+
+                WorkoutPlanError::Forbidden => {
+                    (StatusCode::FORBIDDEN, Json(json!({ "error": "forbidden" })))
+                }
+
+                WorkoutPlanError::WorkoutTemplate(e) => (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!({ "error": format!("workout template error: {}", e) })),
+                ),
+            }
+            .into_response(),
+
+            // ========================
             // JWT ERRORS
             // ========================
             DomainError::Jwt(err) => match err {
@@ -206,14 +271,6 @@ impl IntoResponse for HttpError {
                 ),
             }
             .into_response(),
-            // ========================
-            // CATCH-ALL
-            // ========================
-            _ => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": "unmapped error" })),
-            )
-                .into_response(),
         }
     }
 }
