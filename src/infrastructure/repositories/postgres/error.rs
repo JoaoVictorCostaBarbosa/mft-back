@@ -13,9 +13,7 @@ impl From<sqlx::Error> for DomainError {
                 _ => DomainError::Repository(RepositoryError::DbError(err.message().to_string())),
             },
 
-            _ => {
-                DomainError::Repository(RepositoryError::Unexpected("Unexpected error".to_string()))
-            }
+            _ => DomainError::Repository(RepositoryError::Unexpected(err.to_string())),
         }
     }
 }
@@ -28,7 +26,7 @@ impl From<sqlx::Error> for RepositoryError {
                 Some("23505") => RepositoryError::Conflict(err.message().into()),
                 _ => RepositoryError::DbError(err.message().into()),
             },
-            _ => RepositoryError::Unexpected("Unexpected error".into()),
+            _ => RepositoryError::Unexpected(err.to_string()),
         }
     }
 }

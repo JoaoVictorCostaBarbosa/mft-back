@@ -1,6 +1,6 @@
 use crate::{
     adapters::http::{
-        dtos::{exercise_dto::ExerciseResponseDTO, muscle_group_dto::MuscleGroupDTO},
+        dtos::{exercise_dto::ExercisePaginationQuery, muscle_group_dto::MuscleGroupDTO},
         errors::http_error::HttpError,
         extractors::current_user::CurrentUser,
         mappers::exercise_mapper::ExerciseMapper,
@@ -9,7 +9,7 @@ use crate::{
 };
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
 };
@@ -19,9 +19,11 @@ use axum::{
     path = "/api/exercises/muscle-group/{muscle_group}",
     params(
         ("muscle_group" = MuscleGroupDTO, description = "Muscle group"),
+        ("page" = Option<u32>, Query, description = "Page number. Defaults to 1"),
+        ("per_page" = Option<u32>, Query, description = "Items per page. Defaults to 20, max 100"),
     ),
     responses(
-        (status = 200, description = "Exercises found", body = [ExerciseResponseDTO]),
+        (status = 200, description = "Exercises found", body = crate::adapters::http::dtos::exercise_dto::ExercisePaginatedResponseDTO),
         (status = 403, description = "denied permission"),
         (status = 422, description = "unprocessable entity"),
         (status = 500, description = "internal server error"),
@@ -35,18 +37,22 @@ pub async fn search_myscle_group_exercise(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
     Path(muscle_group): Path<MuscleGroupDTO>,
+    Query(pagination): Query<ExercisePaginationQuery>,
 ) -> impl IntoResponse {
     match state
         .exercise
         .search
-        .execute(current_user, None, Some(muscle_group.into()), None)
+        .execute(
+            current_user,
+            None,
+            Some(muscle_group.into()),
+            None,
+            pagination.to_pagination_fields(),
+        )
         .await
     {
         Ok(exercises) => {
-            let response: Vec<ExerciseResponseDTO> = exercises
-                .into_iter()
-                .map(|e| ExerciseMapper::domain_to_response(e))
-                .collect();
+            let response = ExerciseMapper::paginated_domain_to_response(exercises);
             (StatusCode::OK, Json(response)).into_response()
         }
         Err(e) => HttpError(e).into_response(),

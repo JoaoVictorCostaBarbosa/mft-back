@@ -1,7 +1,7 @@
 use crate::domain::enums::muscle_group::MuscleGroup;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
-#[sqlx(type_name = "muscle_group_enum", rename_all = "lowercase")]
+#[sqlx(type_name = "muscle_group_enum", rename_all = "snake_case")]
 pub enum MuscleGroupDb {
     Chest,
     Back,

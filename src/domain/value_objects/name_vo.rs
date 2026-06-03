@@ -26,11 +26,13 @@ pub enum NameError {
 
 impl Name {
     pub fn new(value: impl Into<String>) -> Result<Self, NameError> {
-        let mut value = value.into().trim().to_string();
+        let value = value.into().trim().to_string();
 
         if value.is_empty() {
             return Err(NameError::EmptyName);
         }
+
+        let value = value.split_whitespace().collect::<Vec<_>>().join(" ");
 
         if value.len() < MIN_LENGTH {
             return Err(NameError::TooShort);
@@ -41,13 +43,11 @@ impl Name {
         }
 
         let regex =
-            regex::Regex::new(r"^[a-zA-Z0-9À-ú ._-]+$").map_err(|_| NameError::RegexError)?;
+            regex::Regex::new(r"^[\p{L}0-9 ._\-'()°]+$").map_err(|_| NameError::RegexError)?;
 
         if !regex.is_match(&value) {
             return Err(NameError::InvalidFormat);
         }
-
-        value = value.split_whitespace().collect::<Vec<_>>().join(" ");
 
         Ok(Self(value))
     }

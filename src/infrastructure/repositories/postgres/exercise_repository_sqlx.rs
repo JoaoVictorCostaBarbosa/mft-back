@@ -1,7 +1,10 @@
 use crate::{
     domain::{
-        commands::exercise_commands::{ExerciseFilterFields, ExerciseUpdateFields},
+        commands::exercise_commands::{
+            ExerciseFilterFields, ExercisePaginationFields, ExerciseUpdateFields,
+        },
         entities::exercise::Exercise,
+        entities::pagination::Paginated,
         errors::{domain_error::DomainError, repository_error::RepositoryError},
         repositories::exercise_repository::ExerciseRepository,
     },
@@ -65,7 +68,7 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
     async fn get_exercises(
         &self,
         fields: ExerciseFilterFields,
-    ) -> Result<Vec<Exercise>, DomainError> {
+    ) -> Result<Paginated<Exercise>, DomainError> {
         let mut qb = QueryBuilder::new(
             r#"
                 SELECT
@@ -82,35 +85,15 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
                 "#,
         );
 
-        match fields.user_id {
-            Some(user_id) => {
-                qb.push(" AND (user_id IS NULL OR user_id = ");
-                qb.push_bind(user_id);
-                qb.push(")");
-            }
-            None => {
-                qb.push(" AND user_id IS NULL");
-            }
-        }
+        push_exercise_filters(&mut qb, &fields);
 
-        if let Some(id) = fields.id {
-            qb.push(" AND id = ");
-            qb.push_bind(id);
-        }
+        qb.push(" ORDER BY name ASC, id ASC");
 
-        if let Some(exercise_type) = fields.exercise_type {
-            qb.push(" AND exercise_type = ");
-            qb.push_bind(ExerciseTypeDb::from(exercise_type));
-        }
-
-        if let Some(equipment) = fields.equipment {
-            qb.push(" AND equipment = ");
-            qb.push_bind(EquipmentDb::from(equipment));
-        }
-
-        if let Some(muscle_group) = fields.muscle_group {
-            qb.push(" AND muscle_group = ");
-            qb.push_bind(MuscleGroupDb::from(muscle_group));
+        if let Some(pagination) = fields.pagination {
+            qb.push(" LIMIT ");
+            qb.push_bind(pagination.limit());
+            qb.push(" OFFSET ");
+            qb.push_bind(pagination.offset());
         }
 
         let models: Vec<ExerciseModel> = qb.build_query_as().fetch_all(&self.pool).await?;
@@ -120,7 +103,28 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
             .map(Exercise::try_from)
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(exercises)
+        let mut count_qb = QueryBuilder::new(
+            r#"
+                SELECT COUNT(*)
+                FROM exercise
+                WHERE deleted_at IS NULL
+                "#,
+        );
+
+        push_exercise_filters(&mut count_qb, &fields);
+
+        let total_items: i64 = count_qb.build_query_scalar().fetch_one(&self.pool).await?;
+        let pagination = fields.pagination.unwrap_or(ExercisePaginationFields {
+            page: 1,
+            per_page: total_items.max(1) as u32,
+        });
+
+        Ok(Paginated::new(
+            exercises,
+            total_items,
+            pagination.per_page,
+            pagination.page,
+        ))
     }
 
     async fn update_exercise(
@@ -254,5 +258,41 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
         let exercise: Exercise = result.try_into()?;
 
         Ok(exercise)
+    }
+}
+
+fn push_exercise_filters<'args>(
+    qb: &mut QueryBuilder<'args, sqlx::Postgres>,
+    fields: &ExerciseFilterFields,
+) {
+    match fields.user_id {
+        Some(user_id) => {
+            qb.push(" AND (user_id IS NULL OR user_id = ");
+            qb.push_bind(user_id);
+            qb.push(")");
+        }
+        None => {
+            qb.push(" AND user_id IS NULL");
+        }
+    }
+
+    if let Some(id) = fields.id {
+        qb.push(" AND id = ");
+        qb.push_bind(id);
+    }
+
+    if let Some(exercise_type) = fields.exercise_type {
+        qb.push(" AND exercise_type = ");
+        qb.push_bind(ExerciseTypeDb::from(exercise_type));
+    }
+
+    if let Some(equipment) = fields.equipment {
+        qb.push(" AND equipment = ");
+        qb.push_bind(EquipmentDb::from(equipment));
+    }
+
+    if let Some(muscle_group) = fields.muscle_group {
+        qb.push(" AND muscle_group = ");
+        qb.push_bind(MuscleGroupDb::from(muscle_group));
     }
 }
