@@ -8,7 +8,8 @@ pub enum EquipmentDTO {
     Dumbbell,
     Machine,
     Bodyweight,
-    Kettlerbell,
+    #[serde(alias = "Kettlerbell")]
+    Kettlebell,
     ResistanceBand,
     Other,
 }
@@ -20,7 +21,7 @@ impl From<EquipmentDTO> for Equipment {
             EquipmentDTO::Dumbbell => Equipment::Dumbbell,
             EquipmentDTO::Machine => Equipment::Machine,
             EquipmentDTO::Bodyweight => Equipment::Bodyweight,
-            EquipmentDTO::Kettlerbell => Equipment::Kettlerbell,
+            EquipmentDTO::Kettlebell => Equipment::Kettlebell,
             EquipmentDTO::ResistanceBand => Equipment::ResistanceBand,
             EquipmentDTO::Other => Equipment::Other,
         }
@@ -34,7 +35,7 @@ impl From<Equipment> for EquipmentDTO {
             Equipment::Dumbbell => EquipmentDTO::Dumbbell,
             Equipment::Machine => EquipmentDTO::Machine,
             Equipment::Bodyweight => EquipmentDTO::Bodyweight,
-            Equipment::Kettlerbell => EquipmentDTO::Kettlerbell,
+            Equipment::Kettlebell => EquipmentDTO::Kettlebell,
             Equipment::ResistanceBand => EquipmentDTO::ResistanceBand,
             Equipment::Other => EquipmentDTO::Other,
         }
