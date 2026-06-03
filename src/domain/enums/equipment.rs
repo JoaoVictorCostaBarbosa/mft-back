@@ -4,7 +4,7 @@ pub enum Equipment {
     Dumbbell,
     Machine,
     Bodyweight,
-    Kettlerbell,
+    Kettlebell,
     ResistanceBand,
     Other,
 }

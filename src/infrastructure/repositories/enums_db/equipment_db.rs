@@ -1,13 +1,13 @@
 use crate::domain::enums::equipment::Equipment;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
-#[sqlx(type_name = "equipment_enum", rename_all = "lowercase")]
+#[sqlx(type_name = "equipment_enum", rename_all = "snake_case")]
 pub enum EquipmentDb {
     Barbell,
     Dumbbell,
     Machine,
     Bodyweight,
-    Kettlerbell,
+    Kettlebell,
     ResistanceBand,
     Other,
 }
@@ -19,7 +19,7 @@ impl From<EquipmentDb> for Equipment {
             EquipmentDb::Dumbbell => Equipment::Dumbbell,
             EquipmentDb::Machine => Equipment::Machine,
             EquipmentDb::Bodyweight => Equipment::Bodyweight,
-            EquipmentDb::Kettlerbell => Equipment::Kettlerbell,
+            EquipmentDb::Kettlebell => Equipment::Kettlebell,
             EquipmentDb::ResistanceBand => Equipment::ResistanceBand,
             EquipmentDb::Other => Equipment::Other,
         }
@@ -33,7 +33,7 @@ impl From<Equipment> for EquipmentDb {
             Equipment::Dumbbell => EquipmentDb::Dumbbell,
             Equipment::Machine => EquipmentDb::Machine,
             Equipment::Bodyweight => EquipmentDb::Bodyweight,
-            Equipment::Kettlerbell => EquipmentDb::Kettlerbell,
+            Equipment::Kettlebell => EquipmentDb::Kettlebell,
             Equipment::ResistanceBand => EquipmentDb::ResistanceBand,
             Equipment::Other => EquipmentDb::Other,
         }

@@ -1,6 +1,6 @@
 use crate::domain::{
-    commands::exercise_commands::ExerciseFilterFields,
-    entities::{exercise::Exercise, user::User},
+    commands::exercise_commands::{ExerciseFilterFields, ExercisePaginationFields},
+    entities::{exercise::Exercise, pagination::Paginated, user::User},
     errors::domain_error::DomainError,
     repositories::exercise_repository::ExerciseRepository,
 };
@@ -15,11 +15,16 @@ impl ReadExercises {
         Self { exercise_repo }
     }
 
-    pub async fn execute(&self, current_user: User) -> Result<Vec<Exercise>, DomainError> {
+    pub async fn execute(
+        &self,
+        current_user: User,
+        pagination: ExercisePaginationFields,
+    ) -> Result<Paginated<Exercise>, DomainError> {
         let exercises = self
             .exercise_repo
             .get_exercises(ExerciseFilterFields {
                 user_id: Some(current_user.id),
+                pagination: Some(pagination),
                 ..Default::default()
             })
             .await?;

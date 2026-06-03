@@ -2,7 +2,10 @@ use crate::adapters::http::{
     cookies::ACCESS_TOKEN_COOKIE,
     dtos::{
         equipment_dto::EquipmentDTO,
-        exercise_dto::{ExerciseRequest, ExerciseResponseDTO, ExerciseUpdateRequest},
+        exercise_dto::{
+            ExercisePaginatedResponseDTO, ExercisePaginationMetaDTO, ExercisePaginationQuery,
+            ExerciseRequest, ExerciseResponseDTO, ExerciseUpdateRequest,
+        },
         exercise_type_dto::ExerciseTypeDTO,
         measurement_dto::{CreateMeasurementDTO, MeasurementResponse},
         muscle_group_dto::MuscleGroupDTO,
@@ -83,6 +86,9 @@ use utoipa::{
             CreateMeasurementDTO,
             CreateUserRequestDTO,
             EquipmentDTO,
+            ExercisePaginatedResponseDTO,
+            ExercisePaginationMetaDTO,
+            ExercisePaginationQuery,
             ExerciseRequest,
             ExerciseResponseDTO,
             ExerciseTypeDTO,

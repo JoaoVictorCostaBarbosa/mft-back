@@ -1,6 +1,6 @@
 use crate::domain::{
-    commands::exercise_commands::ExerciseFilterFields,
-    entities::{exercise::Exercise, user::User},
+    commands::exercise_commands::{ExerciseFilterFields, ExercisePaginationFields},
+    entities::{exercise::Exercise, pagination::Paginated, user::User},
     enums::{equipment::Equipment, exercise_type::ExerciseType, muscle_group::MuscleGroup},
     errors::{domain_error::DomainError, exercise_error::ExerciseError},
     repositories::exercise_repository::ExerciseRepository,
@@ -22,7 +22,8 @@ impl SearchExercises {
         equipment: Option<Equipment>,
         muscle_group: Option<MuscleGroup>,
         exercise_type: Option<ExerciseType>,
-    ) -> Result<Vec<Exercise>, DomainError> {
+        pagination: ExercisePaginationFields,
+    ) -> Result<Paginated<Exercise>, DomainError> {
         if equipment.is_none() && muscle_group.is_none() && exercise_type.is_none() {
             return Err(ExerciseError::InvalidFieldsCriteria.into());
         }
@@ -34,6 +35,7 @@ impl SearchExercises {
                 equipment,
                 muscle_group,
                 exercise_type,
+                pagination: Some(pagination),
                 ..Default::default()
             })
             .await?;

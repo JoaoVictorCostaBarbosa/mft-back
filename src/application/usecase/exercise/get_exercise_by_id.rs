@@ -30,7 +30,7 @@ impl GetExerciseById {
             })
             .await?;
 
-        match exercises.first() {
+        match exercises.items.first() {
             Some(exercice) => Ok(exercice.to_owned()),
             None => Err(RepositoryError::NotFound("exercise not found".to_string()).into()),
         }
