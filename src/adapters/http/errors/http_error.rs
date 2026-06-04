@@ -147,6 +147,11 @@ impl IntoResponse for HttpError {
                     Json(json!({ "error": "position already scheduled" })),
                 ),
 
+                WorkoutPlanError::RoutineItemNotFound => (
+                    StatusCode::NOT_FOUND,
+                    Json(json!({ "error": "routine item not found" })),
+                ),
+
                 WorkoutPlanError::WorkoutTemplateRequired => (
                     StatusCode::UNPROCESSABLE_ENTITY,
                     Json(json!({ "error": "workout template is required for workout routine items" })),

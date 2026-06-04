@@ -17,6 +17,9 @@ pub enum WorkoutPlanError {
     #[error("position already scheduled")]
     PositionAlreadyScheduled,
 
+    #[error("routine item not found")]
+    RoutineItemNotFound,
+
     #[error("workout template is required for workout routine items")]
     WorkoutTemplateRequired,
 

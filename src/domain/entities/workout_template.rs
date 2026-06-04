@@ -17,7 +17,7 @@ pub struct WorkoutTemplate {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct WorkoutTemplateSummary {
     pub id: Uuid,
     pub user_id: Uuid,

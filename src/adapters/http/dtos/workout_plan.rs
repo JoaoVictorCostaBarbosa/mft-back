@@ -28,6 +28,14 @@ pub struct AddRoutineItemToPlanRequestDTO {
     pub position: Option<u32>,
 }
 
+#[derive(Deserialize, ToSchema)]
+pub struct UpdateRoutineItemRequestDTO {
+    pub item_type: Option<RoutineItemTypeDTO>,
+    pub workout_template_id: Option<Uuid>,
+    pub day_of_week: Option<DayOfWeekDTO>,
+    pub position: Option<u32>,
+}
+
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum DayOfWeekDTO {
