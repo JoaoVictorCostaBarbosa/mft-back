@@ -16,15 +16,30 @@ pub struct FinishWorkoutSessionRequestDTO {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct AddExerciseToWorkoutSessionRequestDTO {
+    pub client_operation_id: Option<Uuid>,
     pub exercise_id: Uuid,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct AddSetToWorkoutSessionRequestDTO {
+    pub client_operation_id: Option<Uuid>,
     pub exercise_id: Uuid,
     pub set_type: SetTypeDTO,
     pub weight: f32,
     pub reps: u32,
+    pub completed_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UpdateWorkoutSessionSetRequestDTO {
+    pub set_type: SetTypeDTO,
+    pub weight: f32,
+    pub reps: u32,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ReorderWorkoutSessionExercisesRequestDTO {
+    pub ordered_session_exercise_ids: Vec<Uuid>,
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -38,6 +53,7 @@ pub struct WorkoutSessionWeeklySummaryQueryDTO {
 pub enum WorkoutSessionStatusDTO {
     InProgress,
     Finished,
+    Cancelled,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
@@ -63,15 +79,35 @@ pub struct WorkoutSessionResponseDTO {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct CurrentWorkoutSessionResponseDTO {
     pub id: Uuid,
+    pub workout_plan_id: Uuid,
     pub workout_template: CurrentWorkoutSessionTemplateDTO,
     pub started_at: DateTime<Utc>,
     pub status: WorkoutSessionStatusDTO,
+    pub exercises: Vec<CurrentWorkoutSessionExerciseDTO>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct CurrentWorkoutSessionTemplateDTO {
     pub id: Uuid,
     pub name: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct CurrentWorkoutSessionExerciseDTO {
+    pub id: Uuid,
+    pub client_operation_id: Option<Uuid>,
+    pub exercise: CurrentWorkoutSessionExerciseDetailsDTO,
+    pub order: i32,
+    pub sets: Vec<WorkoutSessionSetResponseDTO>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct CurrentWorkoutSessionExerciseDetailsDTO {
+    pub id: Uuid,
+    pub name: String,
+    pub exercise_type: crate::adapters::http::dtos::exercise_type_dto::ExerciseTypeDTO,
+    pub equipment: crate::adapters::http::dtos::equipment_dto::EquipmentDTO,
+    pub muscle_group: crate::adapters::http::dtos::muscle_group_dto::MuscleGroupDTO,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -86,13 +122,16 @@ pub struct FinishedWorkoutSessionResponseDTO {
 pub struct WorkoutSessionExerciseResponseDTO {
     pub id: Uuid,
     pub workout_session_id: Uuid,
+    pub client_operation_id: Option<Uuid>,
     pub exercise_id: Uuid,
+    pub order: i32,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct WorkoutSessionSetResponseDTO {
     pub id: Uuid,
     pub session_exercise_id: Uuid,
+    pub client_operation_id: Option<Uuid>,
     pub set_type: SetTypeDTO,
     pub weight: f32,
     pub reps: u32,

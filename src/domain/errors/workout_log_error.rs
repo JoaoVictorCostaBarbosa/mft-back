@@ -17,6 +17,15 @@ pub enum WorkoutLogError {
     #[error("workout session already finished")]
     AlreadyFinished,
 
+    #[error("workout session already cancelled")]
+    AlreadyCancelled,
+
+    #[error("workout session must be in progress")]
+    NotInProgress,
+
+    #[error("invalid exercise order")]
+    InvalidExerciseOrder,
+
     #[error("finished_at cannot be before started_at")]
     InvalidFinishedAt,
 

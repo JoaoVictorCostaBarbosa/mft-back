@@ -1,8 +1,7 @@
 use crate::{
     adapters::http::{
-        dtos::workout_session::AddExerciseToWorkoutSessionRequestDTO,
+        dtos::workout_session::ReorderWorkoutSessionExercisesRequestDTO,
         errors::http_error::HttpError, extractors::current_user::CurrentUser,
-        mappers::workout_session_mapper::to_exercise_response,
     },
     application::app_state::app_state::AppState,
 };
@@ -15,37 +14,38 @@ use axum::{
 use uuid::Uuid;
 
 #[utoipa::path{
-    post,
-    path = "/api/workout-sessions/{session_id}/exercises",
-    request_body = AddExerciseToWorkoutSessionRequestDTO,
+    patch,
+    path = "/api/workout-sessions/{session_id}/exercises/reorder",
+    request_body = ReorderWorkoutSessionExercisesRequestDTO,
     params(("session_id" = Uuid, description = "Workout session ID")),
     responses(
-        (status = 201, description = "Exercise added to workout session", body = crate::adapters::http::dtos::workout_session::WorkoutSessionExerciseResponseDTO),
+        (status = 204, description = "Workout session exercises reordered"),
         (status = 403, description = "denied permission"),
         (status = 404, description = "not found"),
+        (status = 409, description = "session is not editable"),
+        (status = 422, description = "invalid exercise order"),
         (status = 500, description = "internal server error"),
     ),
     security(("bearer_auth" = [])),
     tag = "Workout Sessions"
 }]
-pub async fn add_exercise_to_workout_session_handler(
+pub async fn reorder_workout_session_exercises_handler(
     State(state): State<AppState>,
     CurrentUser(current_user): CurrentUser,
     Path(session_id): Path<Uuid>,
-    Json(request): Json<AddExerciseToWorkoutSessionRequestDTO>,
+    Json(request): Json<ReorderWorkoutSessionExercisesRequestDTO>,
 ) -> impl IntoResponse {
     match state
         .workout_session
-        .add_exercise
+        .reorder_exercises
         .execute(
             current_user,
             session_id,
-            request.exercise_id,
-            request.client_operation_id,
+            request.ordered_session_exercise_ids,
         )
         .await
     {
-        Ok(exercise) => (StatusCode::CREATED, Json(to_exercise_response(exercise))).into_response(),
+        Ok(_) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => HttpError(e).into_response(),
     }
 }

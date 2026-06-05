@@ -5,6 +5,7 @@ use crate::domain::enums::workout_session_status::WorkoutSessionStatus;
 pub enum WorkoutSessionStatusDb {
     InProgress,
     Finished,
+    Cancelled,
 }
 
 impl From<WorkoutSessionStatusDb> for WorkoutSessionStatus {
@@ -12,6 +13,7 @@ impl From<WorkoutSessionStatusDb> for WorkoutSessionStatus {
         match value {
             WorkoutSessionStatusDb::InProgress => WorkoutSessionStatus::InProgress,
             WorkoutSessionStatusDb::Finished => WorkoutSessionStatus::Finished,
+            WorkoutSessionStatusDb::Cancelled => WorkoutSessionStatus::Cancelled,
         }
     }
 }
@@ -21,6 +23,7 @@ impl From<WorkoutSessionStatus> for WorkoutSessionStatusDb {
         match value {
             WorkoutSessionStatus::InProgress => WorkoutSessionStatusDb::InProgress,
             WorkoutSessionStatus::Finished => WorkoutSessionStatusDb::Finished,
+            WorkoutSessionStatus::Cancelled => WorkoutSessionStatusDb::Cancelled,
         }
     }
 }

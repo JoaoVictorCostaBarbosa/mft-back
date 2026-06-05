@@ -2,4 +2,5 @@
 pub enum WorkoutSessionStatus {
     InProgress,
     Finished,
+    Cancelled,
 }

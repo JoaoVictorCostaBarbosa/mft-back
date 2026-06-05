@@ -1,5 +1,8 @@
 use crate::domain::{
-    enums::{set_type::SetType, workout_session_status::WorkoutSessionStatus},
+    enums::{
+        equipment::Equipment, exercise_type::ExerciseType, muscle_group::MuscleGroup,
+        set_type::SetType, workout_session_status::WorkoutSessionStatus,
+    },
     errors::workout_log_error::WorkoutLogError,
 };
 use chrono::{DateTime, NaiveDate, Utc};
@@ -17,10 +20,28 @@ pub struct WorkoutSession {
 
 pub struct CurrentWorkoutSession {
     pub id: Uuid,
+    pub workout_plan_id: Uuid,
     pub workout_template_id: Uuid,
     pub workout_template_name: String,
     pub started_at: DateTime<Utc>,
     pub status: WorkoutSessionStatus,
+    pub exercises: Vec<WorkoutSessionDetailedExercise>,
+}
+
+pub struct WorkoutSessionDetailedExercise {
+    pub id: Uuid,
+    pub client_operation_id: Option<Uuid>,
+    pub exercise: WorkoutSessionExerciseDetails,
+    pub order: i32,
+    pub sets: Vec<WorkoutSessionSet>,
+}
+
+pub struct WorkoutSessionExerciseDetails {
+    pub id: Uuid,
+    pub name: String,
+    pub exercise_type: ExerciseType,
+    pub equipment: Equipment,
+    pub muscle_group: MuscleGroup,
 }
 
 pub struct FinishedWorkoutSession {
@@ -33,12 +54,15 @@ pub struct FinishedWorkoutSession {
 pub struct WorkoutSessionExercise {
     pub id: Uuid,
     pub workout_session_id: Uuid,
+    pub client_operation_id: Option<Uuid>,
     pub exercise_id: Uuid,
+    pub order: i32,
 }
 
 pub struct WorkoutSessionSet {
     pub id: Uuid,
     pub session_exercise_id: Uuid,
+    pub client_operation_id: Option<Uuid>,
     pub set_type: SetType,
     pub weight: f32,
     pub reps: u32,
@@ -79,9 +103,7 @@ impl WorkoutSession {
         &self,
         finished_at: Option<DateTime<Utc>>,
     ) -> Result<FinishedWorkoutSession, WorkoutLogError> {
-        if self.status == WorkoutSessionStatus::Finished {
-            return Err(WorkoutLogError::AlreadyFinished);
-        }
+        self.assert_in_progress()?;
 
         let finished_at = finished_at.unwrap_or_else(Utc::now);
 
@@ -95,5 +117,13 @@ impl WorkoutSession {
             started_at: self.started_at,
             finished_at,
         })
+    }
+
+    pub fn assert_in_progress(&self) -> Result<(), WorkoutLogError> {
+        match self.status {
+            WorkoutSessionStatus::InProgress => Ok(()),
+            WorkoutSessionStatus::Finished => Err(WorkoutLogError::AlreadyFinished),
+            WorkoutSessionStatus::Cancelled => Err(WorkoutLogError::AlreadyCancelled),
+        }
     }
 }

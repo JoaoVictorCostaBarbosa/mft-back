@@ -3,6 +3,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::infrastructure::repositories::enums_db::{
+    equipment_db::EquipmentDb, exercise_type_db::ExerciseTypeDb, muscle_group_db::MuscleGroupDb,
     set_type_db::SetTypeDb, workout_session_status_db::WorkoutSessionStatusDb,
 };
 
@@ -20,6 +21,7 @@ pub struct WorkoutSessionRowModel {
 #[derive(Debug, FromRow)]
 pub struct CurrentWorkoutSessionRowModel {
     pub id: Uuid,
+    pub workout_plan_id: Uuid,
     pub workout_template_id: Uuid,
     pub workout_template_name: String,
     pub started_at: DateTime<Utc>,
@@ -41,13 +43,16 @@ pub struct WorkoutSessionHistoryRowModel {
 pub struct WorkoutSessionExerciseRowModel {
     pub id: Uuid,
     pub workout_session_id: Uuid,
+    pub client_operation_id: Option<Uuid>,
     pub exercise_id: Uuid,
+    pub order: i32,
 }
 
 #[derive(Debug, FromRow)]
 pub struct WorkoutSessionSetRowModel {
     pub id: Uuid,
     pub session_exercise_id: Uuid,
+    pub client_operation_id: Option<Uuid>,
     pub set_type: SetTypeDb,
     pub weight: f32,
     pub reps: i32,
@@ -59,4 +64,16 @@ pub struct WorkoutSessionWeeklySummaryRowModel {
     pub date: NaiveDate,
     pub day_of_week: String,
     pub session_id: Option<Uuid>,
+}
+
+#[derive(Debug, FromRow)]
+pub struct WorkoutSessionDetailedExerciseRowModel {
+    pub id: Uuid,
+    pub client_operation_id: Option<Uuid>,
+    pub exercise_id: Uuid,
+    pub exercise_name: String,
+    pub exercise_type: ExerciseTypeDb,
+    pub equipment: EquipmentDb,
+    pub muscle_group: MuscleGroupDb,
+    pub order: i32,
 }
