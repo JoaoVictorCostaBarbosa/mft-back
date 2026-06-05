@@ -6,4 +6,5 @@ pub mod muscle_group_dto;
 pub mod role_dto;
 pub mod user_dto;
 pub mod workout_plan;
+pub mod workout_session;
 pub mod workout_template;

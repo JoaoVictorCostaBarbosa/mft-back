@@ -5,3 +5,5 @@ pub mod muscle_group_db;
 pub mod role_db;
 pub mod routine_item_type_db;
 pub mod routine_mode_db;
+pub mod set_type_db;
+pub mod workout_session_status_db;

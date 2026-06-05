@@ -11,6 +11,21 @@ pub enum WorkoutLogError {
     #[error("without permission to access the resource")]
     Forbidden,
 
+    #[error("workout session already in progress")]
+    AlreadyInProgress,
+
+    #[error("workout session already finished")]
+    AlreadyFinished,
+
+    #[error("finished_at cannot be before started_at")]
+    InvalidFinishedAt,
+
+    #[error("invalid reps")]
+    InvalidReps,
+
+    #[error("invalid weight")]
+    InvalidWeight,
+
     #[error("exercise log error: {0}")]
     ExerciseLog(#[from] ExerciseLogError),
 

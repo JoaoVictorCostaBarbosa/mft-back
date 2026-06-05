@@ -1,8 +1,8 @@
 use crate::domain::errors::{
     bucket_error::BucketError, cripto_error::CriptoError, domain_error::DomainError,
     file_error::FileError, jwt_error::JwtError, permission_error::PermissionError,
-    repository_error::RepositoryError, smtp_error::SmtpError, workout_plan_error::WorkoutPlanError,
-    workout_template_error::WorkoutTemplateError,
+    repository_error::RepositoryError, smtp_error::SmtpError, workout_log_error::WorkoutLogError,
+    workout_plan_error::WorkoutPlanError, workout_template_error::WorkoutTemplateError,
 };
 use axum::{
     Json,
@@ -189,6 +189,45 @@ impl IntoResponse for HttpError {
                 WorkoutPlanError::WorkoutTemplate(e) => (
                     StatusCode::BAD_REQUEST,
                     Json(json!({ "error": format!("workout template error: {}", e) })),
+                ),
+            }
+            .into_response(),
+
+            DomainError::WorkoutLog(err) => match err {
+                WorkoutLogError::NotFound => (
+                    StatusCode::NOT_FOUND,
+                    Json(json!({ "error": "workout session not found" })),
+                ),
+                WorkoutLogError::Forbidden => {
+                    (StatusCode::FORBIDDEN, Json(json!({ "error": "forbidden" })))
+                }
+                WorkoutLogError::AlreadyInProgress => (
+                    StatusCode::CONFLICT,
+                    Json(json!({ "error": "workout session already in progress" })),
+                ),
+                WorkoutLogError::AlreadyFinished => (
+                    StatusCode::CONFLICT,
+                    Json(json!({ "error": "workout session already finished" })),
+                ),
+                WorkoutLogError::InvalidFinishedAt => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "finished_at cannot be before started_at" })),
+                ),
+                WorkoutLogError::InvalidReps => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "invalid reps" })),
+                ),
+                WorkoutLogError::InvalidWeight => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "invalid weight" })),
+                ),
+                WorkoutLogError::ExerciseLog(e) => (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!({ "error": format!("exercise log error: {}", e) })),
+                ),
+                WorkoutLogError::InvalidName(e) => (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!({ "error": format!("invalid name: {}", e) })),
                 ),
             }
             .into_response(),

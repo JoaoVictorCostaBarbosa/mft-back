@@ -21,3 +21,5 @@ CREATE TYPE day_of_week_enum AS ENUM (
 CREATE TYPE routine_mode_enum AS ENUM ('weekly', 'sequential');
 
 CREATE TYPE routine_item_type_enum AS ENUM ('workout', 'rest');
+
+CREATE TYPE workout_session_status_enum AS ENUM ('in_progress', 'finished');

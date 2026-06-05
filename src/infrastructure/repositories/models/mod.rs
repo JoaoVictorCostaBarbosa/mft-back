@@ -5,4 +5,5 @@ pub mod pending_user_model;
 pub mod refresh_token_model;
 pub mod user_model;
 pub mod workout_plan_model;
+pub mod workout_session_model;
 pub mod workout_template_model;
