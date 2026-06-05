@@ -2,7 +2,7 @@ use crate::{
     adapters::http::routers::{
         auth_router::auth_routers, exercise_router::exercise_routers,
         measurement_router::measurement_routers, user_router::user_routers,
-        workout_plan_router::workout_plan_routers,
+        workout_plan_router::workout_plan_routers, workout_session_router::workout_session_routers,
         workout_template_router::workout_template_routers,
     },
     application::app_state::app_state::AppState,
@@ -14,6 +14,7 @@ pub mod exercise_router;
 pub mod measurement_router;
 pub mod user_router;
 pub mod workout_plan_router;
+pub mod workout_session_router;
 pub mod workout_template_router;
 
 pub fn build_http() -> Router<AppState> {
@@ -25,6 +26,7 @@ pub fn build_http() -> Router<AppState> {
             .merge(measurement_routers())
             .merge(exercise_routers())
             .merge(workout_plan_routers())
+            .merge(workout_session_routers())
             .merge(workout_template_routers()),
     )
 }

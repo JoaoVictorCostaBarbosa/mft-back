@@ -24,6 +24,16 @@ pub trait WorkoutPlanRepository: Send + Sync {
         routine_item: &WorkoutPlanRoutineItem,
         workout_plan_id: Uuid,
     ) -> Result<(), DomainError>;
+    async fn update_routine_item(
+        &self,
+        routine_item: &WorkoutPlanRoutineItem,
+        workout_plan_id: Uuid,
+    ) -> Result<(), DomainError>;
+    async fn remove_routine_item(
+        &self,
+        workout_plan_id: Uuid,
+        routine_item_id: Uuid,
+    ) -> Result<(), DomainError>;
     async fn remove_workout_template(
         &self,
         workout_plan_id: Uuid,

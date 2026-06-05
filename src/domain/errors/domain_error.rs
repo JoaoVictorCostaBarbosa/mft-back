@@ -2,8 +2,8 @@ use crate::domain::errors::{
     bucket_error::BucketError, cripto_error::CriptoError, exercise_error::ExerciseError,
     file_error::FileError, jwt_error::JwtError, measurement_error::MeasurementError,
     permission_error::PermissionError, repository_error::RepositoryError, smtp_error::SmtpError,
-    user_error::UserError, workout_plan_error::WorkoutPlanError,
-    workout_template_error::WorkoutTemplateError,
+    user_error::UserError, workout_log_error::WorkoutLogError,
+    workout_plan_error::WorkoutPlanError, workout_template_error::WorkoutTemplateError,
 };
 use thiserror::Error;
 
@@ -44,4 +44,7 @@ pub enum DomainError {
 
     #[error("workout template error {0}")]
     WorkoutTemplate(#[from] WorkoutTemplateError),
+
+    #[error("workout session error {0}")]
+    WorkoutLog(#[from] WorkoutLogError),
 }

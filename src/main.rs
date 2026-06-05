@@ -75,6 +75,7 @@ async fn main() {
         repos.measurement_repo,
         repos.exercise_repo,
         repos.workout_plan_repo,
+        repos.workout_session_repo,
         repos.workout_template_repo,
         cripto_service,
         hmac_sha_service,

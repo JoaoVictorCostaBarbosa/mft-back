@@ -6,4 +6,5 @@ pub mod set_log;
 pub mod user;
 pub mod workout_log;
 pub mod workout_plan;
+pub mod workout_session;
 pub mod workout_template;

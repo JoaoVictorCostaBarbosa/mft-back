@@ -6,3 +6,4 @@ pub mod role;
 pub mod routine_item_type;
 pub mod routine_mode;
 pub mod set_type;
+pub mod workout_session_status;

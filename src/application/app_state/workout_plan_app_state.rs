@@ -1,7 +1,7 @@
 use crate::{
     application::usecase::workout_plan::{
-        FindCurrentWorkoutPlan, SetCurrentWorkoutPlan,
-        add_workout_template::AddWorkoutTemplateToWorkoutPlan,
+        FindCurrentWorkoutPlan, FindNextRoutineItem, RemoveRoutineItem, SetCurrentWorkoutPlan,
+        UpdateRoutineItem, add_workout_template::AddWorkoutTemplateToWorkoutPlan,
         create_workout_plan::CreateWorkoutPlan, delete_workout_plan::DeleteWorkoutPlan,
         find_workout_plan_by_id::FindWorkoutPlanById,
         read_workout_plan_summary::ReadWorkoutPlanSummary,
@@ -27,6 +27,9 @@ pub struct WorkoutPlanAppState {
     pub soft_delete: Arc<SoftDeleteWorkoutPlan>,
     pub add_workout_template: Arc<AddWorkoutTemplateToWorkoutPlan>,
     pub remove_workout_template: Arc<RemoveWorkoutTemplateFromWorkoutPlan>,
+    pub update_routine_item: Arc<UpdateRoutineItem>,
+    pub remove_routine_item: Arc<RemoveRoutineItem>,
+    pub find_next_routine_item: Arc<FindNextRoutineItem>,
 }
 
 impl WorkoutPlanAppState {
@@ -51,6 +54,12 @@ impl WorkoutPlanAppState {
                 workout_plan_repo.clone(),
                 workout_template_repo.clone(),
             )),
+            update_routine_item: Arc::new(UpdateRoutineItem::new(
+                workout_plan_repo.clone(),
+                workout_template_repo.clone(),
+            )),
+            remove_routine_item: Arc::new(RemoveRoutineItem::new(workout_plan_repo.clone())),
+            find_next_routine_item: Arc::new(FindNextRoutineItem::new(workout_plan_repo.clone())),
         }
     }
 }

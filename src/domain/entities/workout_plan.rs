@@ -30,6 +30,7 @@ pub struct WorkoutPlanSummary {
     pub routine_mode: RoutineMode,
 }
 
+#[derive(Clone)]
 pub struct WorkoutPlanRoutineItem {
     pub id: Uuid,
     pub item_type: RoutineItemType,
@@ -146,6 +147,97 @@ impl WorkoutPlan {
         Ok(())
     }
 
+    pub fn update_routine_item(
+        &mut self,
+        routine_item_id: Uuid,
+        item_type: Option<RoutineItemType>,
+        wt: Option<WorkoutTemplate>,
+        day_of_week: Option<DayOfWeek>,
+        position: Option<u32>,
+    ) -> Result<WorkoutPlanRoutineItem, WorkoutPlanError> {
+        let index = self
+            .routine_items
+            .iter()
+            .position(|routine_item| routine_item.id == routine_item_id)
+            .ok_or(WorkoutPlanError::RoutineItemNotFound)?;
+
+        let current_item = self.routine_items[index].clone();
+        let item_type = item_type.unwrap_or(current_item.item_type);
+        let workout_template = match item_type {
+            RoutineItemType::Workout => wt
+                .map(|wt| WorkoutTemplateSummary::new(wt.id, wt.user_id, wt.name))
+                .or(current_item.workout_template),
+            RoutineItemType::Rest => None,
+        };
+
+        let (day_of_week, position) = match self.routine_mode {
+            RoutineMode::Weekly => (day_of_week.or(current_item.day_of_week), None),
+            RoutineMode::Sequential => (None, position.or(current_item.position)),
+        };
+
+        self.validate_routine_item_fields(
+            item_type,
+            workout_template.is_some(),
+            day_of_week,
+            position,
+        )?;
+
+        if let Some(day_of_week) = day_of_week {
+            if self.routine_items.iter().any(|routine_item| {
+                routine_item.id != routine_item_id && routine_item.day_of_week == Some(day_of_week)
+            }) {
+                return Err(WorkoutPlanError::DayAlreadyScheduled);
+            }
+        }
+
+        if let Some(position) = position {
+            if self.routine_items.iter().any(|routine_item| {
+                routine_item.id != routine_item_id && routine_item.position == Some(position)
+            }) {
+                return Err(WorkoutPlanError::PositionAlreadyScheduled);
+            }
+        }
+
+        let routine_item = WorkoutPlanRoutineItem {
+            id: routine_item_id,
+            item_type,
+            workout_template,
+            day_of_week,
+            position,
+        };
+
+        self.routine_items[index] = routine_item.clone();
+
+        Ok(routine_item)
+    }
+
+    pub fn remove_routine_item(&mut self, routine_item_id: Uuid) -> Result<(), WorkoutPlanError> {
+        let index = self
+            .routine_items
+            .iter()
+            .position(|routine_item| routine_item.id == routine_item_id)
+            .ok_or(WorkoutPlanError::RoutineItemNotFound)?;
+
+        self.routine_items.remove(index);
+
+        Ok(())
+    }
+
+    pub fn next_routine_item(&self) -> Result<WorkoutPlanRoutineItem, WorkoutPlanError> {
+        self.routine_items
+            .iter()
+            .filter(|routine_item| match self.routine_mode {
+                RoutineMode::Weekly => routine_item.day_of_week.is_some(),
+                RoutineMode::Sequential => routine_item.position.is_some(),
+            })
+            .min_by_key(|routine_item| match self.routine_mode {
+                RoutineMode::Weekly => routine_item.day_of_week.map(day_of_week_order).unwrap_or(8),
+                RoutineMode::Sequential => routine_item.position.unwrap_or(u32::MAX),
+            })
+            .cloned()
+            .ok_or(WorkoutPlanError::RoutineItemNotFound)
+    }
+
     fn validate_routine_item(
         &self,
         item_type: RoutineItemType,
@@ -153,11 +245,22 @@ impl WorkoutPlan {
         day_of_week: Option<DayOfWeek>,
         position: Option<u32>,
     ) -> Result<(), WorkoutPlanError> {
+        self.validate_routine_item_fields(item_type, wt.is_some(), day_of_week, position)?;
+        Ok(())
+    }
+
+    fn validate_routine_item_fields(
+        &self,
+        item_type: RoutineItemType,
+        has_workout_template: bool,
+        day_of_week: Option<DayOfWeek>,
+        position: Option<u32>,
+    ) -> Result<(), WorkoutPlanError> {
         match item_type {
-            RoutineItemType::Workout if wt.is_none() => {
+            RoutineItemType::Workout if !has_workout_template => {
                 return Err(WorkoutPlanError::WorkoutTemplateRequired);
             }
-            RoutineItemType::Rest if wt.is_some() => {
+            RoutineItemType::Rest if has_workout_template => {
                 return Err(WorkoutPlanError::RestCannotHaveWorkoutTemplate);
             }
             _ => {}
@@ -180,5 +283,17 @@ impl WorkoutPlan {
         }
 
         Ok(())
+    }
+}
+
+fn day_of_week_order(day_of_week: DayOfWeek) -> u32 {
+    match day_of_week {
+        DayOfWeek::Monday => 1,
+        DayOfWeek::Tuesday => 2,
+        DayOfWeek::Wednesday => 3,
+        DayOfWeek::Thursday => 4,
+        DayOfWeek::Friday => 5,
+        DayOfWeek::Saturday => 6,
+        DayOfWeek::Sunday => 7,
     }
 }

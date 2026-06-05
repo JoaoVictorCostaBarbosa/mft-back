@@ -256,6 +256,62 @@ impl WorkoutPlanRepository for WorkoutPlanRepositorySQLx {
         Ok(())
     }
 
+    async fn update_routine_item(
+        &self,
+        routine_item: &WorkoutPlanRoutineItem,
+        workout_plan_id: Uuid,
+    ) -> Result<(), DomainError> {
+        let result = sqlx::query(
+            r#"
+            UPDATE workout_plan_routine_item
+            SET workout_template_id = $1,
+                item_type = $2,
+                day_of_week = $3,
+                position = $4
+            WHERE workout_plan_id = $5
+                AND id = $6
+            "#,
+        )
+        .bind(routine_item.workout_template.as_ref().map(|wt| wt.id))
+        .bind(RoutineItemTypeDb::from(routine_item.item_type))
+        .bind(routine_item.day_of_week.map(DayOfWeekDb::from))
+        .bind(routine_item.position.map(|position| position as i32))
+        .bind(workout_plan_id)
+        .bind(routine_item.id)
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() < 1 {
+            return Err(RepositoryError::NotFound("routine item not found".to_string()).into());
+        }
+
+        Ok(())
+    }
+
+    async fn remove_routine_item(
+        &self,
+        workout_plan_id: Uuid,
+        routine_item_id: Uuid,
+    ) -> Result<(), DomainError> {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM workout_plan_routine_item
+            WHERE workout_plan_id = $1
+                AND id = $2
+            "#,
+        )
+        .bind(workout_plan_id)
+        .bind(routine_item_id)
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() < 1 {
+            return Err(RepositoryError::NotFound("routine item not found".to_string()).into());
+        }
+
+        Ok(())
+    }
+
     async fn find_current_user_plan(&self, user_id: Uuid) -> Result<WorkoutPlan, DomainError> {
         let result = sqlx::query_as::<_, WorkoutPlanRowModel>(
             r#"

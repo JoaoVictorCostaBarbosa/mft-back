@@ -7,7 +7,7 @@ use crate::{
     },
     application::dtos::workout_plan::{WorkoutPlanRequest, WorkoutPlanUpdateRequest},
     domain::{
-        entities::workout_plan::{WorkoutPlan, WorkoutPlanSummary},
+        entities::workout_plan::{WorkoutPlan, WorkoutPlanRoutineItem, WorkoutPlanSummary},
         enums::{
             day_of_week::DayOfWeek, routine_item_type::RoutineItemType, routine_mode::RoutineMode,
         },
@@ -60,24 +60,36 @@ pub fn to_routine_item_type(item_type: RoutineItemTypeDTO) -> RoutineItemType {
     }
 }
 
+pub fn to_optional_routine_item_type(
+    item_type: Option<RoutineItemTypeDTO>,
+) -> Option<RoutineItemType> {
+    item_type.map(to_routine_item_type)
+}
+
+pub fn to_routine_item_response(
+    routine_item: WorkoutPlanRoutineItem,
+) -> WorkoutPlanRoutineItemResponseDTO {
+    WorkoutPlanRoutineItemResponseDTO {
+        id: routine_item.id,
+        item_type: to_routine_item_type_response(routine_item.item_type),
+        workout_template: routine_item.workout_template.map(|wt| {
+            WorkoutPlanRoutineItemTemplateResponseDTO {
+                id: wt.id,
+                user_id: wt.user_id,
+                name: wt.name.value().to_owned(),
+            }
+        }),
+        day_of_week: routine_item.day_of_week.map(to_day_of_week_response),
+        position: routine_item.position,
+    }
+}
+
 pub fn to_workout_plan_response(wp: WorkoutPlan) -> WorkoutPlanResponseDTO {
     let routine_mode = to_routine_mode_response(wp.routine_mode);
     let routine_items = wp
         .routine_items
         .into_iter()
-        .map(|routine_item| WorkoutPlanRoutineItemResponseDTO {
-            id: routine_item.id,
-            item_type: to_routine_item_type_response(routine_item.item_type),
-            workout_template: routine_item.workout_template.map(|wt| {
-                WorkoutPlanRoutineItemTemplateResponseDTO {
-                    id: wt.id,
-                    user_id: wt.user_id,
-                    name: wt.name.value().to_owned(),
-                }
-            }),
-            day_of_week: routine_item.day_of_week.map(to_day_of_week_response),
-            position: routine_item.position,
-        })
+        .map(to_routine_item_response)
         .collect();
     WorkoutPlanResponseDTO {
         id: wp.id,

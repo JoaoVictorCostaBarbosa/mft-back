@@ -4,6 +4,7 @@ use crate::{
             auth_app_state::AuthAppState, exercise_app_state::ExerciseAppState,
             measurement_app_state::MeasurementAppState, user_app_state::UserAppState,
             workout_plan_app_state::WorkoutPlanAppState,
+            workout_session_app_state::WorkoutSessionAppState,
             workout_template_app_state::WorkoutTemplateAppState,
         },
         config::auth_config::AuthConfig,
@@ -17,6 +18,7 @@ use crate::{
             exercise_repository::ExerciseRepository, measurement_repository::MeasurementRepository,
             refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
             workout_plan_repository::WorkoutPlanRepository,
+            workout_session_repository::WorkoutSessionRepository,
             workout_template_repository::WorkoutTemplateRepository,
         },
         services::{
@@ -34,6 +36,7 @@ pub struct AppState {
     pub measurement: MeasurementAppState,
     pub exercise: ExerciseAppState,
     pub workout_plan: WorkoutPlanAppState,
+    pub workout_session: WorkoutSessionAppState,
     pub workout_template: WorkoutTemplateAppState,
     pub jwt_service: Arc<dyn JwtProvider>,
 }
@@ -47,6 +50,7 @@ impl AppState {
         measurement_repo: Arc<dyn MeasurementRepository>,
         exercise_repo: Arc<dyn ExerciseRepository>,
         workout_plan_repo: Arc<dyn WorkoutPlanRepository>,
+        workout_session_repo: Arc<dyn WorkoutSessionRepository>,
         workout_template_repo: Arc<dyn WorkoutTemplateRepository>,
         cripto_service: Arc<dyn CriptoService>,
         hash_service: Arc<dyn RefreshTokenHasher>,
@@ -76,6 +80,11 @@ impl AppState {
             measurement: MeasurementAppState::new(measurement_repo.clone()),
             exercise: ExerciseAppState::new(exercise_repo.clone()),
             workout_plan: WorkoutPlanAppState::new(
+                workout_plan_repo.clone(),
+                workout_template_repo.clone(),
+            ),
+            workout_session: WorkoutSessionAppState::new(
+                workout_session_repo.clone(),
                 workout_plan_repo.clone(),
                 workout_template_repo.clone(),
             ),

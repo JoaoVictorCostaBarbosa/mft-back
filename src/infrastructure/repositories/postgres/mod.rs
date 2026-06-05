@@ -7,6 +7,7 @@ use crate::{
         exercise_repository::ExerciseRepository, measurement_repository::MeasurementRepository,
         refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
         workout_plan_repository::WorkoutPlanRepository,
+        workout_session_repository::WorkoutSessionRepository,
         workout_template_repository::WorkoutTemplateRepository,
     },
     infrastructure::repositories::postgres::{
@@ -17,6 +18,7 @@ use crate::{
         refresh_token_repository_sqlx::RefreshTokenRepositorySqlx,
         user_repository_sqlx::UserRepositorySQLx,
         workout_plan_repository_sqlx::WorkoutPlanRepositorySQLx,
+        workout_session_repository_sqlx::WorkoutSessionRepositorySqlx,
         workout_template_repository_sqlx::WorkoutTemplateRepositorySQLX,
     },
 };
@@ -31,6 +33,7 @@ pub mod pending_user_repository_sqlx;
 pub mod refresh_token_repository_sqlx;
 pub mod user_repository_sqlx;
 pub mod workout_plan_repository_sqlx;
+pub mod workout_session_repository_sqlx;
 pub mod workout_template_repository_sqlx;
 
 pub struct RepositoryBundle {
@@ -41,6 +44,7 @@ pub struct RepositoryBundle {
     pub measurement_repo: Arc<dyn MeasurementRepository>,
     pub exercise_repo: Arc<dyn ExerciseRepository>,
     pub workout_plan_repo: Arc<dyn WorkoutPlanRepository>,
+    pub workout_session_repo: Arc<dyn WorkoutSessionRepository>,
     pub workout_template_repo: Arc<dyn WorkoutTemplateRepository>,
 }
 
@@ -54,6 +58,7 @@ impl RepositoryBundle {
             measurement_repo: Arc::new(MeasurementRepositorySqlx::new(pool.clone())),
             exercise_repo: Arc::new(ExerciseRepositorySqlx::new(pool.clone())),
             workout_plan_repo: Arc::new(WorkoutPlanRepositorySQLx::new(pool.clone())),
+            workout_session_repo: Arc::new(WorkoutSessionRepositorySqlx::new(pool.clone())),
             workout_template_repo: Arc::new(WorkoutTemplateRepositorySQLX::new(pool.clone())),
         }
     }
