@@ -1,15 +1,25 @@
 mod add_exercise_to_workout_session;
 mod add_set_to_workout_session;
+mod cancel_workout_session;
+mod delete_workout_session_set;
 mod find_current_workout_session;
 mod finish_workout_session;
 mod read_workout_session_history;
 mod read_workout_session_weekly_summary;
+mod remove_exercise_from_workout_session;
+mod reorder_workout_session_exercises;
 mod start_workout_session;
+mod update_workout_session_set;
 
 pub use add_exercise_to_workout_session::AddExerciseToWorkoutSession;
 pub use add_set_to_workout_session::AddSetToWorkoutSession;
+pub use cancel_workout_session::CancelWorkoutSession;
+pub use delete_workout_session_set::DeleteWorkoutSessionSet;
 pub use find_current_workout_session::FindCurrentWorkoutSession;
 pub use finish_workout_session::FinishWorkoutSession;
 pub use read_workout_session_history::ReadWorkoutSessionHistory;
 pub use read_workout_session_weekly_summary::ReadWorkoutSessionWeeklySummary;
+pub use remove_exercise_from_workout_session::RemoveExerciseFromWorkoutSession;
+pub use reorder_workout_session_exercises::ReorderWorkoutSessionExercises;
 pub use start_workout_session::StartWorkoutSession;
+pub use update_workout_session_set::UpdateWorkoutSessionSet;

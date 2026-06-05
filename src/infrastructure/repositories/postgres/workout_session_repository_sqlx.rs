@@ -1,7 +1,8 @@
 use crate::{
     domain::{
         entities::workout_session::{
-            CurrentWorkoutSession, FinishedWorkoutSession, WorkoutSession, WorkoutSessionExercise,
+            CurrentWorkoutSession, FinishedWorkoutSession, WorkoutSession,
+            WorkoutSessionDetailedExercise, WorkoutSessionExercise, WorkoutSessionExerciseDetails,
             WorkoutSessionHistoryItem, WorkoutSessionSet, WorkoutSessionWeeklySummaryDay,
         },
         enums::set_type::SetType,
@@ -11,14 +12,14 @@ use crate::{
     infrastructure::repositories::{
         enums_db::{set_type_db::SetTypeDb, workout_session_status_db::WorkoutSessionStatusDb},
         models::workout_session_model::{
-            CurrentWorkoutSessionRowModel, WorkoutSessionExerciseRowModel,
-            WorkoutSessionHistoryRowModel, WorkoutSessionRowModel, WorkoutSessionSetRowModel,
-            WorkoutSessionWeeklySummaryRowModel,
+            CurrentWorkoutSessionRowModel, WorkoutSessionDetailedExerciseRowModel,
+            WorkoutSessionExerciseRowModel, WorkoutSessionHistoryRowModel, WorkoutSessionRowModel,
+            WorkoutSessionSetRowModel, WorkoutSessionWeeklySummaryRowModel,
         },
     },
 };
 use axum::async_trait;
-use chrono::{NaiveDate, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -60,6 +61,7 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
             r#"
             SELECT
                 wl.id,
+                wl.workout_plan_id,
                 wt.id AS workout_template_id,
                 wt.name AS workout_template_name,
                 wl.started_at,
@@ -79,12 +81,85 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
         .fetch_one(&self.pool)
         .await?;
 
+        let exercises = sqlx::query_as::<_, WorkoutSessionDetailedExerciseRowModel>(
+            r#"
+            SELECT
+                el.id,
+                el.client_operation_id,
+                e.id AS exercise_id,
+                e.name AS exercise_name,
+                e.exercise_type,
+                e.equipment,
+                e.muscle_group,
+                el.position AS "order"
+            FROM exercise_log el
+            JOIN exercise e
+                ON e.id = el.exercise_id
+            WHERE el.workout_log_id = $1
+                AND e.deleted_at IS NULL
+            ORDER BY el.position ASC
+            "#,
+        )
+        .bind(row.id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut detailed_exercises = Vec::with_capacity(exercises.len());
+
+        for exercise in exercises {
+            let sets = sqlx::query_as::<_, WorkoutSessionSetRowModel>(
+                r#"
+                SELECT
+                    id,
+                    exercise_log_id AS session_exercise_id,
+                    client_operation_id,
+                    type AS set_type,
+                    weight::real AS weight,
+                    reps,
+                    created_at
+                FROM set_log
+                WHERE exercise_log_id = $1
+                ORDER BY created_at ASC
+                "#,
+            )
+            .bind(exercise.id)
+            .fetch_all(&self.pool)
+            .await?
+            .into_iter()
+            .map(|row| WorkoutSessionSet {
+                id: row.id,
+                session_exercise_id: row.session_exercise_id,
+                client_operation_id: row.client_operation_id,
+                set_type: row.set_type.into(),
+                weight: row.weight,
+                reps: row.reps as u32,
+                created_at: row.created_at,
+            })
+            .collect();
+
+            detailed_exercises.push(WorkoutSessionDetailedExercise {
+                id: exercise.id,
+                client_operation_id: exercise.client_operation_id,
+                exercise: WorkoutSessionExerciseDetails {
+                    id: exercise.exercise_id,
+                    name: exercise.exercise_name,
+                    exercise_type: exercise.exercise_type.into(),
+                    equipment: exercise.equipment.into(),
+                    muscle_group: exercise.muscle_group.into(),
+                },
+                order: exercise.order,
+                sets,
+            });
+        }
+
         Ok(CurrentWorkoutSession {
             id: row.id,
+            workout_plan_id: row.workout_plan_id,
             workout_template_id: row.workout_template_id,
             workout_template_name: row.workout_template_name,
             started_at: row.started_at,
             status: row.status.into(),
+            exercises: detailed_exercises,
         })
     }
 
@@ -142,22 +217,86 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
         Ok(())
     }
 
+    async fn cancel(&self, session_id: Uuid) -> Result<(), DomainError> {
+        let result = sqlx::query(
+            r#"
+            UPDATE workout_log
+            SET status = 'cancelled',
+                deleted_at = COALESCE(deleted_at, NOW())
+            WHERE id = $1
+                AND deleted_at IS NULL
+            "#,
+        )
+        .bind(session_id)
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() < 1 {
+            return Err(RepositoryError::NotFound("workout session not found".to_string()).into());
+        }
+
+        Ok(())
+    }
+
     async fn add_exercise(
         &self,
         session_id: Uuid,
         exercise_id: Uuid,
+        client_operation_id: Option<Uuid>,
     ) -> Result<WorkoutSessionExercise, DomainError> {
+        if let Some(client_operation_id) = client_operation_id {
+            let existing = sqlx::query_as::<_, WorkoutSessionExerciseRowModel>(
+                r#"
+                SELECT
+                    id,
+                    workout_log_id AS workout_session_id,
+                    client_operation_id,
+                    exercise_id,
+                    position AS "order"
+                FROM exercise_log
+                WHERE workout_log_id = $1
+                    AND client_operation_id = $2
+                "#,
+            )
+            .bind(session_id)
+            .bind(client_operation_id)
+            .fetch_optional(&self.pool)
+            .await?;
+
+            if let Some(row) = existing {
+                return Ok(WorkoutSessionExercise {
+                    id: row.id,
+                    workout_session_id: row.workout_session_id,
+                    client_operation_id: row.client_operation_id,
+                    exercise_id: row.exercise_id,
+                    order: row.order,
+                });
+            }
+        }
+
         let id = Uuid::new_v4();
         let row = sqlx::query_as::<_, WorkoutSessionExerciseRowModel>(
             r#"
             INSERT INTO exercise_log
-            (id, workout_log_id, exercise_id)
-            VALUES ($1, $2, $3)
-            RETURNING id, workout_log_id AS workout_session_id, exercise_id
+            (id, workout_log_id, client_operation_id, exercise_id, position)
+            VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                COALESCE((SELECT MAX(position) + 1 FROM exercise_log WHERE workout_log_id = $2), 1)
+            )
+            RETURNING
+                id,
+                workout_log_id AS workout_session_id,
+                client_operation_id,
+                exercise_id,
+                position AS "order"
             "#,
         )
         .bind(id)
         .bind(session_id)
+        .bind(client_operation_id)
         .bind(exercise_id)
         .fetch_one(&self.pool)
         .await?;
@@ -165,7 +304,9 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
         Ok(WorkoutSessionExercise {
             id: row.id,
             workout_session_id: row.workout_session_id,
+            client_operation_id: row.client_operation_id,
             exercise_id: row.exercise_id,
+            order: row.order,
         })
     }
 
@@ -176,7 +317,45 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
         set_type: SetType,
         weight: f32,
         reps: u32,
+        client_operation_id: Option<Uuid>,
+        completed_at: Option<DateTime<Utc>>,
     ) -> Result<WorkoutSessionSet, DomainError> {
+        if let Some(client_operation_id) = client_operation_id {
+            let existing = sqlx::query_as::<_, WorkoutSessionSetRowModel>(
+                r#"
+                SELECT
+                    sl.id,
+                    sl.exercise_log_id AS session_exercise_id,
+                    sl.client_operation_id,
+                    sl.type AS set_type,
+                    sl.weight::real AS weight,
+                    sl.reps,
+                    sl.created_at
+                FROM set_log sl
+                JOIN exercise_log el
+                    ON el.id = sl.exercise_log_id
+                WHERE el.workout_log_id = $1
+                    AND sl.client_operation_id = $2
+                "#,
+            )
+            .bind(session_id)
+            .bind(client_operation_id)
+            .fetch_optional(&self.pool)
+            .await?;
+
+            if let Some(row) = existing {
+                return Ok(WorkoutSessionSet {
+                    id: row.id,
+                    session_exercise_id: row.session_exercise_id,
+                    client_operation_id: row.client_operation_id,
+                    set_type: row.set_type.into(),
+                    weight: row.weight,
+                    reps: row.reps as u32,
+                    created_at: row.created_at,
+                });
+            }
+        }
+
         let exercise_log_id = sqlx::query_scalar::<_, Uuid>(
             r#"
             SELECT id
@@ -192,35 +371,221 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
 
         let exercise_log_id = match exercise_log_id {
             Some(id) => id,
-            None => self.add_exercise(session_id, exercise_id).await?.id,
+            None => self.add_exercise(session_id, exercise_id, None).await?.id,
         };
 
         let id = Uuid::new_v4();
         let row = sqlx::query_as::<_, WorkoutSessionSetRowModel>(
             r#"
             INSERT INTO set_log
-            (id, exercise_log_id, type, weight, reps, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, exercise_log_id AS session_exercise_id, type AS set_type, weight::real AS weight, reps, created_at
+            (id, exercise_log_id, client_operation_id, type, weight, reps, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING
+                id,
+                exercise_log_id AS session_exercise_id,
+                client_operation_id,
+                type AS set_type,
+                weight::real AS weight,
+                reps,
+                created_at
             "#,
         )
         .bind(id)
         .bind(exercise_log_id)
+        .bind(client_operation_id)
         .bind(SetTypeDb::from(set_type))
         .bind(weight)
         .bind(reps as i32)
-        .bind(Utc::now())
+        .bind(completed_at.unwrap_or_else(Utc::now))
         .fetch_one(&self.pool)
         .await?;
 
         Ok(WorkoutSessionSet {
             id: row.id,
             session_exercise_id: row.session_exercise_id,
+            client_operation_id: row.client_operation_id,
             set_type: row.set_type.into(),
             weight: row.weight,
             reps: row.reps as u32,
             created_at: row.created_at,
         })
+    }
+
+    async fn update_set(
+        &self,
+        session_id: Uuid,
+        set_id: Uuid,
+        set_type: SetType,
+        weight: f32,
+        reps: u32,
+    ) -> Result<WorkoutSessionSet, DomainError> {
+        let row = sqlx::query_as::<_, WorkoutSessionSetRowModel>(
+            r#"
+            UPDATE set_log sl
+            SET type = $3,
+                weight = $4,
+                reps = $5
+            FROM exercise_log el
+            WHERE sl.id = $2
+                AND sl.exercise_log_id = el.id
+                AND el.workout_log_id = $1
+            RETURNING
+                sl.id,
+                sl.exercise_log_id AS session_exercise_id,
+                sl.client_operation_id,
+                sl.type AS set_type,
+                sl.weight::real AS weight,
+                sl.reps,
+                sl.created_at
+            "#,
+        )
+        .bind(session_id)
+        .bind(set_id)
+        .bind(SetTypeDb::from(set_type))
+        .bind(weight)
+        .bind(reps as i32)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        match row {
+            Some(row) => Ok(WorkoutSessionSet {
+                id: row.id,
+                session_exercise_id: row.session_exercise_id,
+                client_operation_id: row.client_operation_id,
+                set_type: row.set_type.into(),
+                weight: row.weight,
+                reps: row.reps as u32,
+                created_at: row.created_at,
+            }),
+            None => Err(RepositoryError::NotFound("set not found".to_string()).into()),
+        }
+    }
+
+    async fn delete_set(&self, session_id: Uuid, set_id: Uuid) -> Result<(), DomainError> {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM set_log sl
+            USING exercise_log el
+            WHERE sl.id = $2
+                AND sl.exercise_log_id = el.id
+                AND el.workout_log_id = $1
+            "#,
+        )
+        .bind(session_id)
+        .bind(set_id)
+        .execute(&self.pool)
+        .await?;
+
+        if result.rows_affected() < 1 {
+            return Err(RepositoryError::NotFound("set not found".to_string()).into());
+        }
+
+        Ok(())
+    }
+
+    async fn reorder_exercises(
+        &self,
+        session_id: Uuid,
+        ordered_session_exercise_ids: Vec<Uuid>,
+    ) -> Result<(), DomainError> {
+        let mut tx = self.pool.begin().await?;
+
+        for (index, session_exercise_id) in ordered_session_exercise_ids.iter().enumerate() {
+            let result = sqlx::query(
+                r#"
+                UPDATE exercise_log
+                SET position = $3
+                WHERE workout_log_id = $1
+                    AND id = $2
+                "#,
+            )
+            .bind(session_id)
+            .bind(session_exercise_id)
+            .bind((index + 1) as i32)
+            .execute(&mut *tx)
+            .await?;
+
+            if result.rows_affected() < 1 {
+                return Err(
+                    RepositoryError::NotFound("session exercise not found".to_string()).into(),
+                );
+            }
+        }
+
+        tx.commit().await?;
+        Ok(())
+    }
+
+    async fn find_session_exercise_ids(&self, session_id: Uuid) -> Result<Vec<Uuid>, DomainError> {
+        let rows = sqlx::query_scalar::<_, Uuid>(
+            r#"
+            SELECT id
+            FROM exercise_log
+            WHERE workout_log_id = $1
+            ORDER BY position ASC
+            "#,
+        )
+        .bind(session_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows)
+    }
+
+    async fn remove_exercise(
+        &self,
+        session_id: Uuid,
+        session_exercise_id: Uuid,
+    ) -> Result<(), DomainError> {
+        let mut tx = self.pool.begin().await?;
+
+        sqlx::query(
+            r#"
+            DELETE FROM set_log
+            WHERE exercise_log_id = $1
+            "#,
+        )
+        .bind(session_exercise_id)
+        .execute(&mut *tx)
+        .await?;
+
+        let result = sqlx::query(
+            r#"
+            DELETE FROM exercise_log
+            WHERE workout_log_id = $1
+                AND id = $2
+            "#,
+        )
+        .bind(session_id)
+        .bind(session_exercise_id)
+        .execute(&mut *tx)
+        .await?;
+
+        if result.rows_affected() < 1 {
+            return Err(RepositoryError::NotFound("session exercise not found".to_string()).into());
+        }
+
+        sqlx::query(
+            r#"
+            WITH ordered AS (
+                SELECT
+                    id,
+                    ROW_NUMBER() OVER (ORDER BY position ASC) AS new_position
+                FROM exercise_log
+                WHERE workout_log_id = $1
+            )
+            UPDATE exercise_log el
+            SET position = ordered.new_position
+            FROM ordered
+            WHERE el.id = ordered.id
+            "#,
+        )
+        .bind(session_id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+        Ok(())
     }
 
     async fn history(&self, user_id: Uuid) -> Result<Vec<WorkoutSessionHistoryItem>, DomainError> {

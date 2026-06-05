@@ -209,6 +209,18 @@ impl IntoResponse for HttpError {
                     StatusCode::CONFLICT,
                     Json(json!({ "error": "workout session already finished" })),
                 ),
+                WorkoutLogError::AlreadyCancelled => (
+                    StatusCode::CONFLICT,
+                    Json(json!({ "error": "workout session already cancelled" })),
+                ),
+                WorkoutLogError::NotInProgress => (
+                    StatusCode::CONFLICT,
+                    Json(json!({ "error": "workout session must be in progress" })),
+                ),
+                WorkoutLogError::InvalidExerciseOrder => (
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    Json(json!({ "error": "invalid exercise order" })),
+                ),
                 WorkoutLogError::InvalidFinishedAt => (
                     StatusCode::UNPROCESSABLE_ENTITY,
                     Json(json!({ "error": "finished_at cannot be before started_at" })),
