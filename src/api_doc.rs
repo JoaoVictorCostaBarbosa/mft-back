@@ -11,8 +11,9 @@ use crate::adapters::http::{
         muscle_group_dto::MuscleGroupDTO,
         role_dto::RoleDTO,
         user_dto::{
-            AuthResponseDTO, CreateUserRequestDTO, LoginRequestDTO, RefreshResponseDTO,
-            UpdateEmailDTO, UpdatePasswordDTO, UpdateUserDTO, UserResponseDTO, VerifyRequestDTO,
+            AuthResponseDTO, CreateUserRequestDTO, GoogleLoginRequestDTO, LoginRequestDTO,
+            RefreshResponseDTO, UpdateEmailDTO, UpdatePasswordDTO, UpdateUserDTO, UserResponseDTO,
+            VerifyRequestDTO,
         },
         workout_plan::{
             AddRoutineItemToPlanRequestDTO, AddWorkoutTemplateToPlanRequestDTO, DayOfWeekDTO,
@@ -47,6 +48,7 @@ use utoipa::{
 #[openapi(
     paths(
         crate::adapters::http::handlers::auth::create_user::create_user_handler,
+        crate::adapters::http::handlers::auth::google_login::google_login_handler,
         crate::adapters::http::handlers::auth::login_user::login_user_handler,
         crate::adapters::http::handlers::auth::logout::logout_handler,
         crate::adapters::http::handlers::auth::refresh_token::refresh_access_handler,
@@ -115,6 +117,7 @@ use utoipa::{
             AuthResponseDTO,
             CreateMeasurementDTO,
             CreateUserRequestDTO,
+            GoogleLoginRequestDTO,
             EquipmentDTO,
             ExercisePaginatedResponseDTO,
             ExercisePaginationMetaDTO,

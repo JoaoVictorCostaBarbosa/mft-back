@@ -16,6 +16,11 @@ pub struct LoginRequestDTO {
     pub password: String,
 }
 
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct GoogleLoginRequestDTO {
+    pub id_token: String,
+}
+
 #[derive(Debug, Serialize, ToSchema)]
 pub struct UserResponseDTO {
     pub id: Uuid,

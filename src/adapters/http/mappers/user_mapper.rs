@@ -1,4 +1,5 @@
 use crate::adapters::http::dtos::user_dto::*;
+use crate::application::dtos::auth::google_login_request::GoogleLoginRequest;
 use crate::application::dtos::auth::login_request::LoginRequest;
 use crate::application::dtos::auth::user_create::UserCreate;
 use crate::application::dtos::auth::verify_request::VerifyRequest;
@@ -38,6 +39,12 @@ impl UserMappers {
         LoginRequest {
             email: request.email,
             password: request.password,
+        }
+    }
+
+    pub fn to_google_login_request(&self, request: GoogleLoginRequestDTO) -> GoogleLoginRequest {
+        GoogleLoginRequest {
+            id_token: request.id_token,
         }
     }
 

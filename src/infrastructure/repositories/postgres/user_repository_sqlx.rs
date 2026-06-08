@@ -32,14 +32,15 @@ impl UserRepository for UserRepositorySQLx {
         sqlx::query(
             r#"
             INSERT INTO users
-            (id, name, email, password, role, url_img, created_at, updated_at, deleted_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            (id, name, email, password, google_sub, role, url_img, created_at, updated_at, deleted_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             "#,
         )
         .bind(user.id)
         .bind(user.name.value())
         .bind(user.email.value())
         .bind(user.password.clone())
+        .bind(user.google_sub.clone())
         .bind(role)
         .bind(user.url_img.clone())
         .bind(user.created_at)
@@ -86,6 +87,58 @@ impl UserRepository for UserRepositorySQLx {
                 Ok(user)
             }
             Err(e) => Err(DomainError::from(e)),
+        }
+    }
+
+    async fn get_user_by_google_sub(&self, google_sub: &str) -> Result<User, DomainError> {
+        let result = sqlx::query_as::<_, UserModel>(
+            r#"
+            SELECT * FROM users
+            WHERE google_sub = $1 AND deleted_at IS NULL
+            "#,
+        )
+        .bind(google_sub)
+        .fetch_one(&self.pool)
+        .await;
+
+        match result {
+            Ok(user_model) => Ok(user_model.to_domain()?),
+            Err(e) => Err(DomainError::from(e)),
+        }
+    }
+
+    async fn link_google_sub(
+        &self,
+        user_id: Uuid,
+        google_sub: &str,
+        url_img: Option<String>,
+    ) -> Result<User, DomainError> {
+        let now: DateTime<Utc> = Utc::now();
+
+        let result = sqlx::query_as::<_, UserModel>(
+            r#"
+            UPDATE users
+            SET google_sub = $1,
+                url_img = COALESCE(url_img, $2),
+                updated_at = $3
+            WHERE id = $4
+                AND deleted_at IS NULL
+                AND (google_sub IS NULL OR google_sub = $1)
+            RETURNING *
+            "#,
+        )
+        .bind(google_sub)
+        .bind(url_img)
+        .bind(now)
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        match result {
+            Some(user_model) => Ok(user_model.to_domain()?),
+            None => {
+                Err(RepositoryError::Conflict("google account already linked".to_string()).into())
+            }
         }
     }
 

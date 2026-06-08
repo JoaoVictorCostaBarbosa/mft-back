@@ -14,6 +14,8 @@ pub struct LoadEnv {
     pub access_minutes: i64,
     pub refresh_days: i64,
 
+    pub google_client_id: Option<String>,
+
     pub smtp_host: String,
     pub smtp_port: u16,
     pub smtp_secure: bool,
@@ -45,6 +47,8 @@ impl LoadEnv {
 
             access_minutes: env_var_parse("ACCESS_MINUTES"),
             refresh_days: env_var_parse("REFRESH_DAYS"),
+
+            google_client_id: env::var("GOOGLE_CLIENT_ID").ok(),
 
             smtp_host: env_var("SMTP_HOST"),
             smtp_port: env_var_parse("SMTP_PORT"),
