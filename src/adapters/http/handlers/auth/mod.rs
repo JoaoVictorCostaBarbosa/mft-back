@@ -1,4 +1,5 @@
 pub mod create_user;
+pub mod google_login;
 pub mod login_user;
 pub mod logout;
 pub mod refresh_token;

@@ -1,6 +1,7 @@
 use crate::{
     adapters::http::handlers::auth::{
-        create_user::create_user_handler, login_user::login_user_handler, logout::logout_handler,
+        create_user::create_user_handler, google_login::google_login_handler,
+        login_user::login_user_handler, logout::logout_handler,
         refresh_token::refresh_access_handler, verify_user::verify_user_handler,
     },
     application::app_state::app_state::AppState,
@@ -15,6 +16,7 @@ pub fn auth_routers() -> Router<AppState> {
         .route("/auth/register", post(create_user_handler))
         .route("/auth/verify", post(verify_user_handler))
         .route("/auth/login", post(login_user_handler))
+        .route("/auth/google", post(google_login_handler))
         .route("/auth/refresh", post(refresh_access_handler))
         .route("/auth/logout", patch(logout_handler))
 }

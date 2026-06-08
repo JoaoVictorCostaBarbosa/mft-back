@@ -11,7 +11,10 @@ use crate::{
     domain::services::{cripto::CriptoService, jwt::JwtProvider},
     infrastructure::{
         config::env::LoadEnv,
-        providers::{mail::resend_sending::ResendEmailService, r2_storage::R2Storage},
+        providers::{
+            google_oauth::GoogleOAuthHttpProvider, mail::resend_sending::ResendEmailService,
+            r2_storage::R2Storage,
+        },
         repositories::postgres::RepositoryBundle,
         security::{
             argon2_hasher::Argon2Hasher, hmac_sha_hasher::HmacShaHasher,
@@ -49,6 +52,8 @@ async fn main() {
 
     let cripto_service: Arc<dyn CriptoService> = Arc::new(Argon2Hasher {});
 
+    let google_oauth_provider = Arc::new(GoogleOAuthHttpProvider::new(env.google_client_id));
+
     let jwt_service: Arc<dyn JwtProvider> =
         Arc::new(JwtService::new(env.secret_access_key, env.access_minutes));
 
@@ -78,6 +83,7 @@ async fn main() {
         repos.workout_session_repo,
         repos.workout_template_repo,
         cripto_service,
+        google_oauth_provider,
         hmac_sha_service,
         jwt_service,
         resend_service,
