@@ -1,14 +1,11 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_plan::UpdateRoutineItemRequestDTO,
-        errors::http_error::HttpError,
-        extractors::current_user::CurrentUser,
-        mappers::workout_plan_mapper::{
-            to_optional_day_of_week, to_optional_routine_item_type, to_routine_item_response,
-        },
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::UpdateRoutineItemRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_optional_day_of_week;
+use crate::adapters::http::mappers::to_optional_routine_item_type;
+use crate::adapters::http::mappers::to_routine_item_response;
+use crate::application::app_state::AppState;
+use crate::application::dtos::UpdateRoutineItemInput;
 use axum::{
     Json,
     extract::{Path, State},
@@ -25,7 +22,7 @@ use uuid::Uuid;
         ("routine_item_id" = Uuid, description = "Routine item ID", example = "b728b759-4d32-4148-936e-d9036c071d72"),
     ),
     responses(
-        (status = 200, description = "Routine item updated", body = crate::adapters::http::dtos::workout_plan::WorkoutPlanRoutineItemResponseDTO),
+        (status = 200, description = "Routine item updated", body = crate::adapters::http::dtos::WorkoutPlanRoutineItemResponseDTO),
         (status = 403, description = "denied permission"),
         (status = 404, description = "not found"),
         (status = 409, description = "routine conflict"),
@@ -48,12 +45,14 @@ pub async fn update_routine_item_handler(
         .update_routine_item
         .execute(
             current_user,
-            workout_plan_id,
-            routine_item_id,
-            to_optional_routine_item_type(request.item_type),
-            request.workout_template_id,
-            to_optional_day_of_week(request.day_of_week),
-            request.position,
+            UpdateRoutineItemInput {
+                workout_plan_id,
+                routine_item_id,
+                item_type: to_optional_routine_item_type(request.item_type),
+                workout_template_id: request.workout_template_id,
+                day_of_week: to_optional_day_of_week(request.day_of_week),
+                position: request.position,
+            },
         )
         .await
     {

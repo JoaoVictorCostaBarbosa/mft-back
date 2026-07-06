@@ -1,13 +1,15 @@
-use crate::domain::{
-    commands::exercise_commands::{ExerciseFilterFields, ExercisePaginationFields},
-    entities::{exercise::Exercise, pagination::Paginated, user::User},
-    errors::domain_error::DomainError,
-    repositories::exercise_repository::ExerciseRepository,
-};
+use crate::application::errors::AppError;
+use crate::application::pagination::PageRequest;
+use crate::domain::commands::ExerciseFilterFields;
+use crate::domain::commands::ExercisePaginationFields;
+use crate::domain::entities::Exercise;
+use crate::domain::entities::Paginated;
+use crate::domain::entities::User;
+use crate::domain::repositories::ExerciseRepository;
 use std::sync::Arc;
 
 pub struct ReadExercises {
-    pub exercise_repo: Arc<dyn ExerciseRepository>,
+    exercise_repo: Arc<dyn ExerciseRepository>,
 }
 
 impl ReadExercises {
@@ -18,13 +20,22 @@ impl ReadExercises {
     pub async fn execute(
         &self,
         current_user: User,
-        pagination: ExercisePaginationFields,
-    ) -> Result<Paginated<Exercise>, DomainError> {
+        page: PageRequest,
+        name: Option<String>,
+    ) -> Result<Paginated<Exercise>, AppError> {
+        let name = name
+            .map(|value| value.trim().to_string())
+            .filter(|value| !value.is_empty());
+
         let exercises = self
             .exercise_repo
             .get_exercises(ExerciseFilterFields {
                 user_id: Some(current_user.id),
-                pagination: Some(pagination),
+                name,
+                pagination: Some(ExercisePaginationFields {
+                    page: page.page,
+                    per_page: page.per_page,
+                }),
                 ..Default::default()
             })
             .await?;

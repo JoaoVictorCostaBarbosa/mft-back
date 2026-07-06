@@ -1,7 +1,6 @@
-use crate::domain::value_objects::{
-    body_height_vo::BodyHeightError, body_part_vo::BodyPartMeasureError,
-    body_weight_vo::BodyWeightError,
-};
+use crate::domain::value_objects::BodyHeightError;
+use crate::domain::value_objects::BodyPartMeasureError;
+use crate::domain::value_objects::BodyWeightError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

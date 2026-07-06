@@ -1,12 +1,10 @@
-use crate::domain::{
-    entities::{user::User, workout_session::WorkoutSession},
-    errors::{domain_error::DomainError, workout_log_error::WorkoutLogError},
-    repositories::{
-        workout_plan_repository::WorkoutPlanRepository,
-        workout_session_repository::WorkoutSessionRepository,
-        workout_template_repository::WorkoutTemplateRepository,
-    },
-};
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::entities::WorkoutSession;
+use crate::domain::errors::WorkoutSessionError;
+use crate::domain::repositories::WorkoutPlanRepository;
+use crate::domain::repositories::WorkoutSessionRepository;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -34,13 +32,13 @@ impl StartWorkoutSession {
         current_user: User,
         workout_plan_id: Uuid,
         workout_template_id: Uuid,
-    ) -> Result<WorkoutSession, DomainError> {
+    ) -> Result<WorkoutSession, AppError> {
         if self
             .workout_session_repo
             .has_in_progress(current_user.id)
             .await?
         {
-            return Err(WorkoutLogError::AlreadyInProgress.into());
+            return Err(WorkoutSessionError::AlreadyInProgress.into());
         }
 
         let workout_plan = self.workout_plan_repo.find_by_id(workout_plan_id).await?;
@@ -56,5 +54,97 @@ impl StartWorkoutSession {
         self.workout_session_repo.start(&session).await?;
 
         Ok(session)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::enums::WorkoutSessionStatus;
+    use crate::domain::errors::DomainError;
+    use crate::domain::errors::PermissionError;
+    use crate::test_support::fakes::FakeWorkoutPlanRepository;
+    use crate::test_support::fakes::FakeWorkoutTemplateRepository;
+    use crate::test_support::fakes::InMemoryWorkoutSessionRepository;
+    use crate::test_support::fixtures;
+
+    #[tokio::test]
+    async fn starts_session_for_owned_plan_and_template() {
+        let user = fixtures::user();
+        let plan_id = Uuid::new_v4();
+        let template_id = Uuid::new_v4();
+        let session_repo = Arc::new(InMemoryWorkoutSessionRepository::default());
+        let use_case = StartWorkoutSession::new(
+            session_repo.clone(),
+            Arc::new(FakeWorkoutPlanRepository::new(plan_id, user.id)),
+            Arc::new(FakeWorkoutTemplateRepository {
+                template_id,
+                owner_id: user.id,
+            }),
+        );
+
+        let session = use_case.execute(user, plan_id, template_id).await.unwrap();
+
+        assert_eq!(session.status, WorkoutSessionStatus::InProgress);
+        assert_eq!(session_repo.sessions.lock().unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn rejects_when_session_already_in_progress() {
+        let user = fixtures::user();
+        let plan_id = Uuid::new_v4();
+        let template_id = Uuid::new_v4();
+        let existing = fixtures::in_progress_session(user.id);
+        let session_repo = Arc::new(InMemoryWorkoutSessionRepository::with_sessions(vec![
+            existing,
+        ]));
+        let use_case = StartWorkoutSession::new(
+            session_repo.clone(),
+            Arc::new(FakeWorkoutPlanRepository::new(plan_id, user.id)),
+            Arc::new(FakeWorkoutTemplateRepository {
+                template_id,
+                owner_id: user.id,
+            }),
+        );
+
+        let err = use_case
+            .execute(user, plan_id, template_id)
+            .await
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            AppError::Domain(DomainError::WorkoutSession(
+                WorkoutSessionError::AlreadyInProgress
+            ))
+        ));
+        assert_eq!(session_repo.sessions.lock().unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn rejects_plan_owned_by_another_user() {
+        let user = fixtures::user();
+        let plan_id = Uuid::new_v4();
+        let template_id = Uuid::new_v4();
+        let session_repo = Arc::new(InMemoryWorkoutSessionRepository::default());
+        let use_case = StartWorkoutSession::new(
+            session_repo.clone(),
+            Arc::new(FakeWorkoutPlanRepository::new(plan_id, Uuid::new_v4())),
+            Arc::new(FakeWorkoutTemplateRepository {
+                template_id,
+                owner_id: user.id,
+            }),
+        );
+
+        let err = use_case
+            .execute(user, plan_id, template_id)
+            .await
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            AppError::Domain(DomainError::Permission(PermissionError::Forbidden))
+        ));
+        assert!(session_repo.sessions.lock().unwrap().is_empty());
     }
 }

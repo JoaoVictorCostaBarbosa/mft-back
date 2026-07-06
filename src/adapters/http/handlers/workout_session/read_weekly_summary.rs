@@ -1,11 +1,8 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_session::WorkoutSessionWeeklySummaryQueryDTO, errors::http_error::HttpError,
-        extractors::current_user::CurrentUser,
-        mappers::workout_session_mapper::to_weekly_summary_response,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::WorkoutSessionWeeklySummaryQueryDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_weekly_summary_response;
+use crate::application::app_state::AppState;
 use axum::{
     Json,
     extract::{Query, State},
@@ -17,7 +14,7 @@ use axum::{
     path = "/api/workout-sessions/weekly-summary",
     params(WorkoutSessionWeeklySummaryQueryDTO),
     responses(
-        (status = 200, description = "Workout session weekly summary", body = crate::adapters::http::dtos::workout_session::WorkoutSessionWeeklySummaryResponseDTO),
+        (status = 200, description = "Workout session weekly summary", body = crate::adapters::http::dtos::WorkoutSessionWeeklySummaryResponseDTO),
         (status = 500, description = "internal server error"),
     ),
     security(("bearer_auth" = [])),

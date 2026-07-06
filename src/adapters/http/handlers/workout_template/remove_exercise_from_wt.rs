@@ -1,11 +1,8 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_template::WorkoutTemplateExerciseDTO, errors::http_error::HttpError,
-        extractors::current_user::CurrentUser,
-        mappers::workout_template_mapper::to_request_workout_template_exercise,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::WorkoutTemplateExerciseDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_request_workout_template_exercise;
+use crate::application::app_state::AppState;
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
 #[utoipa::path{

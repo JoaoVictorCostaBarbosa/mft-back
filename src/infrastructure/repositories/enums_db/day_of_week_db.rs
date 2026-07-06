@@ -1,4 +1,4 @@
-use crate::domain::enums::day_of_week::DayOfWeek;
+use crate::domain::enums::DayOfWeek;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 #[sqlx(type_name = "day_of_week_enum", rename_all = "snake_case")]

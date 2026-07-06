@@ -1,6 +1,6 @@
-use crate::domain::enums::{
-    equipment::Equipment, exercise_type::ExerciseType, muscle_group::MuscleGroup,
-};
+use crate::domain::enums::Equipment;
+use crate::domain::enums::ExerciseType;
+use crate::domain::enums::MuscleGroup;
 
 pub struct CreateExerciseRequest {
     pub name: String,

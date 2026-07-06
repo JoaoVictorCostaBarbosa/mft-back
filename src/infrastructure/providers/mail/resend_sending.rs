@@ -1,5 +1,6 @@
-use crate::domain::{errors::smtp_error::SmtpError, services::smtp::SmtpService};
-use axum::async_trait;
+use crate::application::errors::MailError;
+use crate::application::ports::Mailer;
+use async_trait::async_trait;
 use reqwest::Client;
 use serde_json::json;
 
@@ -20,8 +21,8 @@ impl ResendEmailService {
 }
 
 #[async_trait]
-impl SmtpService for ResendEmailService {
-    async fn send_email(&self, to: &str, subject: &str, code: &str) -> Result<(), SmtpError> {
+impl Mailer for ResendEmailService {
+    async fn send_email(&self, to: &str, subject: &str, code: &str) -> Result<(), MailError> {
         let template = include_str!("templates/verification_code.html");
         let template = template.replace("{{CODIGO_DE_VERIFICACAO}}", code);
 
@@ -38,11 +39,11 @@ impl SmtpService for ResendEmailService {
             }))
             .send()
             .await
-            .map_err(|e| SmtpError::Send(e.to_string()))?;
+            .map_err(|e| MailError::Send(e.to_string()))?;
 
         if !response.status().is_success() {
             let body = response.text().await.unwrap_or_default();
-            return Err(SmtpError::Send(format!("Resend API error: {}", body)));
+            return Err(MailError::Send(format!("Resend API error: {}", body)));
         }
 
         Ok(())

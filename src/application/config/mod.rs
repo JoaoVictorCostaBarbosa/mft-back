@@ -1,1 +1,3 @@
-pub mod auth_config;
+mod auth_config;
+
+pub use auth_config::AuthConfig;

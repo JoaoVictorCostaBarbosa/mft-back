@@ -1,14 +1,14 @@
-use crate::domain::commands::exercise_commands::ExerciseFilterFields;
-use crate::domain::{
-    entities::{exercise::Exercise, user::User},
-    errors::{domain_error::DomainError, repository_error::RepositoryError},
-    repositories::exercise_repository::ExerciseRepository,
-};
+use crate::application::errors::AppError;
+use crate::domain::commands::ExerciseFilterFields;
+use crate::domain::entities::Exercise;
+use crate::domain::entities::User;
+use crate::domain::errors::RepositoryError;
+use crate::domain::repositories::ExerciseRepository;
 use std::sync::Arc;
 use uuid::Uuid;
 
 pub struct GetExerciseById {
-    pub exercise_repo: Arc<dyn ExerciseRepository>,
+    exercise_repo: Arc<dyn ExerciseRepository>,
 }
 
 impl GetExerciseById {
@@ -20,7 +20,7 @@ impl GetExerciseById {
         &self,
         exercise_id: Uuid,
         current_user: User,
-    ) -> Result<Exercise, DomainError> {
+    ) -> Result<Exercise, AppError> {
         let exercises = self
             .exercise_repo
             .get_exercises(ExerciseFilterFields {

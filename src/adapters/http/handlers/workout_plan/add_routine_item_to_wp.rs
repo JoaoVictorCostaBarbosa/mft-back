@@ -1,12 +1,10 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_plan::AddRoutineItemToPlanRequestDTO,
-        errors::http_error::HttpError,
-        extractors::current_user::CurrentUser,
-        mappers::workout_plan_mapper::{to_optional_day_of_week, to_routine_item_type},
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::AddRoutineItemToPlanRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_optional_day_of_week;
+use crate::adapters::http::mappers::to_routine_item_type;
+use crate::application::app_state::AppState;
+use crate::application::dtos::AddRoutineItemInput;
 use axum::{
     Json,
     extract::{Path, State},
@@ -49,11 +47,13 @@ pub async fn add_routine_item_to_workout_plan_handler(
         .add_workout_template
         .execute(
             current_user,
-            workout_plan_id,
-            request.workout_template_id,
-            item_type,
-            day_of_week,
-            request.position,
+            AddRoutineItemInput {
+                workout_plan_id,
+                workout_template_id: request.workout_template_id,
+                item_type,
+                day_of_week,
+                position: request.position,
+            },
         )
         .await
     {

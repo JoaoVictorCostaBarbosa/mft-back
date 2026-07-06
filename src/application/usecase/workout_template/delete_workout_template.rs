@@ -1,7 +1,6 @@
-use crate::domain::{
-    entities::user::User, errors::domain_error::DomainError,
-    repositories::workout_template_repository::WorkoutTemplateRepository,
-};
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -14,7 +13,7 @@ impl DeleteWorkoutTemplate {
         Self { workout_repo }
     }
 
-    pub async fn execute(&self, current_user: User, workout_id: Uuid) -> Result<(), DomainError> {
+    pub async fn execute(&self, current_user: User, workout_id: Uuid) -> Result<(), AppError> {
         let workout = self.workout_repo.find_by_id(workout_id).await?;
 
         workout.assert_owner(&current_user)?;

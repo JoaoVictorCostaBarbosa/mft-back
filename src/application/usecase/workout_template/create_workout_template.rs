@@ -1,11 +1,9 @@
-use crate::{
-    application::dtos::workout_template::workout_template_request::WorkoutTemplateRequest,
-    domain::{
-        entities::{exercise::Exercise, user::User, workout_template::WorkoutTemplate},
-        errors::domain_error::DomainError,
-        repositories::workout_template_repository::WorkoutTemplateRepository,
-    },
-};
+use crate::application::dtos::workout_template::WorkoutTemplateRequest;
+use crate::application::errors::AppError;
+use crate::domain::entities::Exercise;
+use crate::domain::entities::User;
+use crate::domain::entities::WorkoutTemplate;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 
 pub struct CreateWorkoutTemplate {
@@ -21,7 +19,7 @@ impl CreateWorkoutTemplate {
         &self,
         current_user: User,
         workout_request: WorkoutTemplateRequest,
-    ) -> Result<WorkoutTemplate, DomainError> {
+    ) -> Result<WorkoutTemplate, AppError> {
         let exercises: Vec<Exercise> = vec![];
         let workout = WorkoutTemplate::new(current_user.id, workout_request.name, exercises)?;
 

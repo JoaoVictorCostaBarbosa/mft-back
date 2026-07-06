@@ -1,12 +1,10 @@
-use crate::{
-    adapters::http::{
-        cookies::{CookieConfig, REFRESH_TOKEN_COOKIE},
-        errors::http_error::HttpError,
-        mappers::user_mapper::UserMappers,
-    },
-    application::app_state::app_state::AppState,
-    domain::{errors::domain_error::DomainError, errors::jwt_error::JwtError},
-};
+use crate::adapters::http::CookieConfig;
+use crate::adapters::http::REFRESH_TOKEN_COOKIE;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::mappers::UserMappers;
+use crate::application::app_state::AppState;
+use crate::application::errors::AppError;
+use crate::application::errors::JwtError;
 use axum::{
     extract::{Extension, State},
     http::StatusCode,
@@ -32,7 +30,7 @@ pub async fn refresh_access_handler(
     let refresh_token = match jar.get(REFRESH_TOKEN_COOKIE) {
         Some(cookie) => cookie.value().to_string(),
         None => {
-            return HttpError(DomainError::Jwt(JwtError::MissingClaim)).into_response();
+            return HttpError(AppError::Jwt(JwtError::MissingClaim)).into_response();
         }
     };
 

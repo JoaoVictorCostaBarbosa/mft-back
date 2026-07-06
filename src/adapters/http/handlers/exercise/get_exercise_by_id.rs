@@ -1,10 +1,7 @@
-use crate::{
-    adapters::http::{
-        errors::http_error::HttpError, extractors::current_user::CurrentUser,
-        mappers::exercise_mapper::ExerciseMapper,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::ExerciseMapper;
+use crate::application::app_state::AppState;
 use axum::{
     Json,
     extract::{Path, State},

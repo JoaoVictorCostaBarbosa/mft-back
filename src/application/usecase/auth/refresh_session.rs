@@ -1,25 +1,23 @@
-use crate::{
-    application::dtos::auth::refresh_response::RefreshResponse,
-    domain::{
-        entities::refresh_token::RefreshToken,
-        errors::{
-            domain_error::DomainError, permission_error::PermissionError,
-            repository_error::RepositoryError,
-        },
-        repositories::{
-            refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
-        },
-        services::{jwt::JwtProvider, refresh_token_hasher::RefreshTokenHasher},
-    },
-};
+use crate::application::dtos::auth::RefreshResponse;
+use crate::application::errors::AppError;
+use crate::application::ports::Clock;
+use crate::application::ports::JwtProvider;
+use crate::application::ports::RefreshTokenHasher;
+use crate::application::ports::TokenGenerator;
+use crate::domain::entities::RefreshToken;
+use crate::domain::errors::PermissionError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::repositories::RefreshTokenRepository;
+use crate::domain::repositories::UserRepository;
 use std::sync::Arc;
-use uuid::Uuid;
 
 pub struct RefreshSession {
-    pub refresh_token_repo: Arc<dyn RefreshTokenRepository>,
-    pub user_repo: Arc<dyn UserRepository>,
-    pub jwt_service: Arc<dyn JwtProvider>,
-    pub hash_service: Arc<dyn RefreshTokenHasher>,
+    refresh_token_repo: Arc<dyn RefreshTokenRepository>,
+    user_repo: Arc<dyn UserRepository>,
+    jwt_service: Arc<dyn JwtProvider>,
+    hash_service: Arc<dyn RefreshTokenHasher>,
+    token_generator: Arc<dyn TokenGenerator>,
+    clock: Arc<dyn Clock>,
     pub refresh_exp_in_days: i64,
 }
 
@@ -29,6 +27,8 @@ impl RefreshSession {
         user_repo: Arc<dyn UserRepository>,
         jwt_service: Arc<dyn JwtProvider>,
         hash_service: Arc<dyn RefreshTokenHasher>,
+        token_generator: Arc<dyn TokenGenerator>,
+        clock: Arc<dyn Clock>,
         refresh_exp_in_days: i64,
     ) -> Self {
         Self {
@@ -36,11 +36,13 @@ impl RefreshSession {
             user_repo,
             jwt_service,
             hash_service,
+            token_generator,
+            clock,
             refresh_exp_in_days,
         }
     }
 
-    pub async fn execute(&self, token: String) -> Result<RefreshResponse, DomainError> {
+    pub async fn execute(&self, token: String) -> Result<RefreshResponse, AppError> {
         let hashed_token = self.hash_service.hash(&token)?;
 
         let refresh_token = match self
@@ -53,20 +55,26 @@ impl RefreshSession {
             Err(e) => return Err(e.into()),
         };
 
-        self.refresh_token_repo.revoke(refresh_token.id).await?;
-
         let user = self.user_repo.get_user_by_id(refresh_token.user_id).await?;
 
         let access = self
             .jwt_service
             .generate_access(user.id.to_string(), user.role)?;
 
-        let refresh_raw = Uuid::new_v4().to_string();
+        let refresh_raw = self.token_generator.generate();
         let refresh_hash = self.hash_service.hash(&refresh_raw)?;
 
-        let refresh = RefreshToken::new(user.id, refresh_hash, self.refresh_exp_in_days);
+        let refresh = RefreshToken::new(
+            user.id,
+            refresh_hash,
+            self.refresh_exp_in_days,
+            self.clock.now(),
+        );
 
-        self.refresh_token_repo.create(refresh).await?;
+        // Revogação do token antigo e criação do novo na mesma transação.
+        self.refresh_token_repo
+            .rotate(refresh_token.id, refresh)
+            .await?;
 
         let response = RefreshResponse::new(access, refresh_raw);
 

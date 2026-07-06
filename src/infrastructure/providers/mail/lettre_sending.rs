@@ -1,5 +1,6 @@
-use crate::domain::{errors::smtp_error::SmtpError, services::smtp::SmtpService};
-use axum::async_trait;
+use crate::application::errors::MailError;
+use crate::application::ports::Mailer;
+use async_trait::async_trait;
 use lettre::{
     Transport,
     message::{Mailbox, Message, header},
@@ -26,14 +27,14 @@ impl LettreSmtpService {
 
         let mailer = if secure {
             SmtpTransport::relay(&host)
-                .map_err(|e| SmtpError::Config(e.to_string()))
+                .map_err(|e| MailError::Config(e.to_string()))
                 .expect("Failed to initialize SMTP service")
                 .port(port)
                 .credentials(creds)
                 .build()
         } else {
             SmtpTransport::starttls_relay(&host)
-                .map_err(|e| SmtpError::Config(e.to_string()))
+                .map_err(|e| MailError::Config(e.to_string()))
                 .expect("Failed to initialize SMTP service")
                 .port(port)
                 .credentials(creds)
@@ -45,8 +46,8 @@ impl LettreSmtpService {
 }
 
 #[async_trait]
-impl SmtpService for LettreSmtpService {
-    async fn send_email(&self, to: &str, subject: &str, code: &str) -> Result<(), SmtpError> {
+impl Mailer for LettreSmtpService {
+    async fn send_email(&self, to: &str, subject: &str, code: &str) -> Result<(), MailError> {
         let template = include_str!("templates/verification_code.html");
         let template = template.replace("{{CODIGO_DE_VERIFICACAO}}", &code);
 
@@ -54,24 +55,24 @@ impl SmtpService for LettreSmtpService {
             .from(
                 self.from
                     .parse::<Mailbox>()
-                    .map_err(|e| SmtpError::Build(e.to_string()))?,
+                    .map_err(|e| MailError::Build(e.to_string()))?,
             )
             .to(to
                 .parse::<Mailbox>()
-                .map_err(|e| SmtpError::Build(e.to_string()))?)
+                .map_err(|e| MailError::Build(e.to_string()))?)
             .subject(subject)
             .header(header::ContentType::TEXT_HTML)
             .body(template.to_string())
-            .map_err(|e| SmtpError::Build(e.to_string()))?;
+            .map_err(|e| MailError::Build(e.to_string()))?;
 
         let result = tokio::task::spawn_blocking({
             let mailer = self.mailer.clone();
             move || mailer.send(&email)
         })
         .await
-        .map_err(|e| SmtpError::Send(e.to_string()))?;
+        .map_err(|e| MailError::Send(e.to_string()))?;
 
-        result.map_err(|e| SmtpError::Send(e.to_string()))?;
+        result.map_err(|e| MailError::Send(e.to_string()))?;
 
         Ok(())
     }

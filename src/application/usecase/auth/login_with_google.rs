@@ -1,38 +1,39 @@
-use crate::{
-    application::dtos::auth::google_login_request::GoogleLoginRequest,
-    domain::{
-        entities::user::User,
-        errors::{
-            domain_error::DomainError, repository_error::RepositoryError, user_error::UserError,
-        },
-        repositories::user_repository::UserRepository,
-        services::{cripto::CriptoService, google_oauth::GoogleOAuthProvider},
-        value_objects::email_vo::Email,
-    },
-};
+use crate::application::dtos::auth::GoogleLoginRequest;
+use crate::application::errors::AppError;
+use crate::application::ports::CryptoService;
+use crate::application::ports::GoogleOAuthProvider;
+use crate::application::ports::TokenGenerator;
+use crate::domain::entities::User;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::errors::UserError;
+use crate::domain::repositories::UserRepository;
+use crate::domain::value_objects::Email;
 use std::sync::Arc;
-use uuid::Uuid;
 
 pub struct LoginWithGoogle {
     user_repo: Arc<dyn UserRepository>,
-    cripto_service: Arc<dyn CriptoService>,
+    crypto_service: Arc<dyn CryptoService>,
     google_oauth_provider: Arc<dyn GoogleOAuthProvider>,
+    token_generator: Arc<dyn TokenGenerator>,
 }
 
 impl LoginWithGoogle {
     pub fn new(
         user_repo: Arc<dyn UserRepository>,
-        cripto_service: Arc<dyn CriptoService>,
+        crypto_service: Arc<dyn CryptoService>,
         google_oauth_provider: Arc<dyn GoogleOAuthProvider>,
+        token_generator: Arc<dyn TokenGenerator>,
     ) -> Self {
         Self {
             user_repo,
-            cripto_service,
+            crypto_service,
             google_oauth_provider,
+            token_generator,
         }
     }
 
-    pub async fn execute(&self, request: GoogleLoginRequest) -> Result<User, DomainError> {
+    pub async fn execute(&self, request: GoogleLoginRequest) -> Result<User, AppError> {
         let google_user = self
             .google_oauth_provider
             .verify_id_token(&request.id_token)
@@ -48,7 +49,7 @@ impl LoginWithGoogle {
         {
             Ok(user) => return Ok(user),
             Err(DomainError::Repository(RepositoryError::NotFound(_))) => {}
-            Err(e) => return Err(e),
+            Err(e) => return Err(AppError::Domain(e)),
         }
 
         match self.user_repo.get_user_by_email(&google_user.email).await {
@@ -62,12 +63,13 @@ impl LoginWithGoogle {
                     .into());
                 }
 
-                self.user_repo
+                Ok(self
+                    .user_repo
                     .link_google_sub(user.id, &google_user.sub, google_user.picture)
-                    .await
+                    .await?)
             }
             Err(DomainError::Repository(RepositoryError::NotFound(_))) => {
-                let password = self.cripto_service.hash(&Uuid::new_v4().to_string())?;
+                let password = self.crypto_service.hash(&self.token_generator.generate())?;
                 let mut user = User::new(google_user.name, google_user.email, password)?;
                 user.google_sub = Some(google_user.sub);
                 user.url_img = google_user.picture;
@@ -76,7 +78,7 @@ impl LoginWithGoogle {
 
                 Ok(user)
             }
-            Err(e) => Err(e),
+            Err(e) => Err(AppError::Domain(e)),
         }
     }
 }

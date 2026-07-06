@@ -4,24 +4,23 @@ mod application;
 mod db;
 mod domain;
 mod infrastructure;
-use crate::{
-    adapters::http::{cookies::CookieConfig, routers::build_http},
-    api_doc::ApiDoc,
-    application::app_state::app_state::AppState,
-    domain::services::{cripto::CriptoService, jwt::JwtProvider},
-    infrastructure::{
-        config::env::LoadEnv,
-        providers::{
-            google_oauth::GoogleOAuthHttpProvider, mail::resend_sending::ResendEmailService,
-            r2_storage::R2Storage,
-        },
-        repositories::postgres::RepositoryBundle,
-        security::{
-            argon2_hasher::Argon2Hasher, hmac_sha_hasher::HmacShaHasher,
-            jwt::jwt_token_service::JwtService,
-        },
-    },
-};
+#[cfg(test)]
+mod test_support;
+use crate::adapters::http::CookieConfig;
+use crate::adapters::http::routers::build_http;
+use crate::api_doc::ApiDoc;
+use crate::application::app_state::AppState;
+use crate::application::ports::CryptoService;
+use crate::application::ports::JwtProvider;
+use crate::infrastructure::config::LoadEnv;
+use crate::infrastructure::providers::GoogleOAuthHttpProvider;
+use crate::infrastructure::providers::R2Storage;
+use crate::infrastructure::providers::mail::ResendEmailService;
+use crate::infrastructure::repositories::postgres::RepositoryBundle;
+use crate::infrastructure::security::Argon2Hasher;
+use crate::infrastructure::security::HmacShaHasher;
+use crate::infrastructure::security::jwt::JwtService;
+use crate::infrastructure::system::{RandCodeGenerator, SystemClock, UuidTokenGenerator};
 use axum::http::{HeaderValue, Method, header};
 use axum::{Extension, Router};
 use db::create_pool;
@@ -37,11 +36,17 @@ async fn root() -> &'static str {
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
     let env = LoadEnv::new();
-    println!("INFO app: development mode = {}", env.app_development);
+    tracing::info!(development_mode = env.app_development, "app starting");
 
     let pool = create_pool(&env.database_url).await;
-    println!("INFO sqlx::pool: connection established");
+    tracing::info!("sqlx pool: connection established");
 
     sqlx::migrate!("./migrations")
         .run(&pool)
@@ -50,7 +55,7 @@ async fn main() {
 
     let repos = RepositoryBundle::new(pool.clone());
 
-    let cripto_service: Arc<dyn CriptoService> = Arc::new(Argon2Hasher {});
+    let crypto_service: Arc<dyn CryptoService> = Arc::new(Argon2Hasher {});
 
     let google_oauth_provider = Arc::new(GoogleOAuthHttpProvider::new(env.google_client_id));
 
@@ -72,6 +77,10 @@ async fn main() {
         env.smtp_from.expect("SMTP_FROM is required"),
     ));
 
+    let clock = Arc::new(SystemClock);
+    let code_generator = Arc::new(RandCodeGenerator);
+    let token_generator = Arc::new(UuidTokenGenerator);
+
     let app_state = AppState::new(
         repos.user_repo,
         repos.pending_user_repo,
@@ -79,15 +88,20 @@ async fn main() {
         repos.pending_change_repo,
         repos.measurement_repo,
         repos.exercise_repo,
+        repos.exercise_queries,
         repos.workout_plan_repo,
         repos.workout_session_repo,
+        repos.workout_session_queries,
         repos.workout_template_repo,
-        cripto_service,
+        crypto_service,
         google_oauth_provider,
         hmac_sha_service,
         jwt_service,
         resend_service,
         r2_service,
+        clock,
+        code_generator,
+        token_generator,
         env.refresh_days,
     );
     let cookie_config =
@@ -125,9 +139,9 @@ async fn main() {
         .with_state(app_state);
 
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], env.port));
-    println!("INFO server: running on {}", addr);
+    tracing::info!(%addr, "server running");
 
-    println!(
+    tracing::info!(
         "API documentation in: http://localhost:{}/swagger-ui",
         env.port
     );

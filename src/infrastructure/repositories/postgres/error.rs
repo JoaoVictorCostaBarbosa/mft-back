@@ -1,32 +1,32 @@
-use crate::domain::errors::{domain_error::DomainError, repository_error::RepositoryError};
+use crate::domain::errors::DomainError;
+use crate::domain::errors::RepositoryError;
 
 impl From<sqlx::Error> for DomainError {
     fn from(err: sqlx::Error) -> Self {
-        match err {
-            sqlx::Error::RowNotFound => {
-                DomainError::Repository(RepositoryError::NotFound("entity not found".to_string()))
-            }
-            sqlx::Error::Database(err) => match err.code().as_deref() {
-                Some("23505") => {
-                    DomainError::Repository(RepositoryError::Conflict(err.message().to_string()))
-                }
-                _ => DomainError::Repository(RepositoryError::DbError(err.message().to_string())),
-            },
-
-            _ => DomainError::Repository(RepositoryError::Unexpected(err.to_string())),
-        }
+        DomainError::Repository(RepositoryError::from(err))
     }
 }
 
 impl From<sqlx::Error> for RepositoryError {
     fn from(err: sqlx::Error) -> Self {
         match err {
-            sqlx::Error::RowNotFound => RepositoryError::NotFound("".into()),
+            sqlx::Error::RowNotFound => RepositoryError::NotFound("entity not found".into()),
             sqlx::Error::Database(err) => match err.code().as_deref() {
-                Some("23505") => RepositoryError::Conflict(err.message().into()),
-                _ => RepositoryError::DbError(err.message().into()),
+                // A mensagem do driver (nome de constraint/tabela) não pode virar
+                // contrato da API: fica só no log.
+                Some("23505") => {
+                    tracing::error!(message = err.message(), "sqlx: unique violation");
+                    RepositoryError::Conflict("resource already exists".into())
+                }
+                _ => {
+                    tracing::error!(message = err.message(), "sqlx: database error");
+                    RepositoryError::DbError(err.message().into())
+                }
             },
-            _ => RepositoryError::Unexpected(err.to_string()),
+            _ => {
+                tracing::error!(error = %err, "sqlx: unexpected error");
+                RepositoryError::Unexpected(err.to_string())
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
-use crate::domain::{entities::measurement::Measurement, errors::domain_error::DomainError};
-use axum::async_trait;
+use crate::domain::entities::Measurement;
+use crate::domain::errors::DomainError;
+use async_trait::async_trait;
 use uuid::Uuid;
 
 #[async_trait]

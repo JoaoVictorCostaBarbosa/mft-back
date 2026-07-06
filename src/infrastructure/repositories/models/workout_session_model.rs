@@ -2,10 +2,11 @@ use chrono::{DateTime, NaiveDate, Utc};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::infrastructure::repositories::enums_db::{
-    equipment_db::EquipmentDb, exercise_type_db::ExerciseTypeDb, muscle_group_db::MuscleGroupDb,
-    set_type_db::SetTypeDb, workout_session_status_db::WorkoutSessionStatusDb,
-};
+use crate::infrastructure::repositories::enums_db::EquipmentDb;
+use crate::infrastructure::repositories::enums_db::ExerciseTypeDb;
+use crate::infrastructure::repositories::enums_db::MuscleGroupDb;
+use crate::infrastructure::repositories::enums_db::SetTypeDb;
+use crate::infrastructure::repositories::enums_db::WorkoutSessionStatusDb;
 
 #[derive(Debug, FromRow)]
 pub struct WorkoutSessionRowModel {
@@ -37,6 +38,8 @@ pub struct WorkoutSessionHistoryRowModel {
     pub started_at: DateTime<Utc>,
     pub finished_at: Option<DateTime<Utc>>,
     pub status: WorkoutSessionStatusDb,
+    pub total_sets: i64,
+    pub total_volume_kg: f64,
 }
 
 #[derive(Debug, FromRow)]

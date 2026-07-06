@@ -1,11 +1,9 @@
-use crate::{
-    domain::{
-        entities::user::User,
-        errors::user_error::UserError,
-        value_objects::{email_vo::Email, name_vo::Name},
-    },
-    infrastructure::repositories::enums_db::role_db::RoleDb,
-};
+use crate::domain::entities::User;
+use crate::domain::errors::UserError;
+use crate::domain::value_objects::Email;
+use crate::domain::value_objects::Name;
+use crate::infrastructure::repositories::enums_db::GoalDb;
+use crate::infrastructure::repositories::enums_db::RoleDb;
 use chrono::{DateTime, Utc};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;
@@ -19,6 +17,7 @@ pub struct UserModel {
     pub google_sub: Option<String>,
     pub role: RoleDb,
     pub url_img: Option<String>,
+    pub goal: Option<GoalDb>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
     pub deleted_at: Option<DateTime<Utc>>,
@@ -34,6 +33,7 @@ impl UserModel {
             google_sub: self.google_sub.clone(),
             role: self.role.clone().into(),
             url_img: self.url_img.clone(),
+            goal: self.goal.map(Into::into),
             created_at: self.created_at,
             updated_at: self.updated_at,
             deleted_at: self.deleted_at,

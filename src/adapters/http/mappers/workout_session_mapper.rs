@@ -1,24 +1,29 @@
-use crate::{
-    adapters::http::dtos::workout_session::{
-        CurrentWorkoutSessionExerciseDTO, CurrentWorkoutSessionExerciseDetailsDTO,
-        CurrentWorkoutSessionResponseDTO, CurrentWorkoutSessionTemplateDTO,
-        FinishedWorkoutSessionResponseDTO, SetTypeDTO, WorkoutSessionExerciseResponseDTO,
-        WorkoutSessionHistoryItemDTO, WorkoutSessionHistoryResponseDTO, WorkoutSessionResponseDTO,
-        WorkoutSessionSetResponseDTO, WorkoutSessionStatusDTO, WorkoutSessionWeeklySummaryDayDTO,
-        WorkoutSessionWeeklySummaryResponseDTO,
-    },
-    adapters::http::dtos::{
-        equipment_dto::EquipmentDTO, exercise_type_dto::ExerciseTypeDTO,
-        muscle_group_dto::MuscleGroupDTO,
-    },
-    domain::{
-        entities::workout_session::{
-            CurrentWorkoutSession, FinishedWorkoutSession, WorkoutSession, WorkoutSessionExercise,
-            WorkoutSessionHistoryItem, WorkoutSessionSet, WorkoutSessionWeeklySummaryDay,
-        },
-        enums::{set_type::SetType, workout_session_status::WorkoutSessionStatus},
-    },
-};
+use crate::adapters::http::dtos::CurrentWorkoutSessionExerciseDTO;
+use crate::adapters::http::dtos::CurrentWorkoutSessionExerciseDetailsDTO;
+use crate::adapters::http::dtos::CurrentWorkoutSessionResponseDTO;
+use crate::adapters::http::dtos::CurrentWorkoutSessionTemplateDTO;
+use crate::adapters::http::dtos::EquipmentDTO;
+use crate::adapters::http::dtos::ExerciseTypeDTO;
+use crate::adapters::http::dtos::FinishedWorkoutSessionResponseDTO;
+use crate::adapters::http::dtos::MuscleGroupDTO;
+use crate::adapters::http::dtos::SetTypeDTO;
+use crate::adapters::http::dtos::WorkoutSessionExerciseResponseDTO;
+use crate::adapters::http::dtos::WorkoutSessionHistoryItemDTO;
+use crate::adapters::http::dtos::WorkoutSessionHistoryResponseDTO;
+use crate::adapters::http::dtos::WorkoutSessionResponseDTO;
+use crate::adapters::http::dtos::WorkoutSessionSetResponseDTO;
+use crate::adapters::http::dtos::WorkoutSessionStatusDTO;
+use crate::adapters::http::dtos::WorkoutSessionWeeklySummaryDayDTO;
+use crate::adapters::http::dtos::WorkoutSessionWeeklySummaryResponseDTO;
+use crate::application::read_models::CurrentWorkoutSession;
+use crate::application::read_models::WorkoutSessionHistoryItem;
+use crate::application::read_models::WorkoutSessionWeeklySummary;
+use crate::domain::entities::FinishedWorkoutSession;
+use crate::domain::entities::WorkoutSession;
+use crate::domain::entities::WorkoutSessionExercise;
+use crate::domain::entities::WorkoutSessionSet;
+use crate::domain::enums::SetType;
+use crate::domain::enums::WorkoutSessionStatus;
 
 pub fn to_set_type(set_type: SetTypeDTO) -> SetType {
     match set_type {
@@ -122,16 +127,20 @@ pub fn to_history_response(
                 started_at: item.started_at,
                 finished_at: item.finished_at,
                 status: to_status_response(item.status),
+                total_sets: item.total_sets,
+                total_volume_kg: item.total_volume_kg,
             })
             .collect(),
     }
 }
 
 pub fn to_weekly_summary_response(
-    days: Vec<WorkoutSessionWeeklySummaryDay>,
+    summary: WorkoutSessionWeeklySummary,
 ) -> WorkoutSessionWeeklySummaryResponseDTO {
     WorkoutSessionWeeklySummaryResponseDTO {
-        days: days
+        total_volume_kg: summary.total_volume_kg,
+        days: summary
+            .days
             .into_iter()
             .map(|day| WorkoutSessionWeeklySummaryDayDTO {
                 date: day.date,
@@ -151,7 +160,7 @@ fn to_status_response(status: WorkoutSessionStatus) -> WorkoutSessionStatusDTO {
     }
 }
 
-fn to_set_type_response(set_type: SetType) -> SetTypeDTO {
+pub fn to_set_type_response(set_type: SetType) -> SetTypeDTO {
     match set_type {
         SetType::Warmup => SetTypeDTO::Warmup,
         SetType::Working => SetTypeDTO::Working,

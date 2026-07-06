@@ -1,17 +1,14 @@
-use crate::{
-    adapters::http::{
-        errors::http_error::HttpError, extractors::current_user::CurrentUser,
-        mappers::workout_session_mapper::to_current_response,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_current_response;
+use crate::application::app_state::AppState;
 use axum::{Json, extract::State, response::IntoResponse};
 
 #[utoipa::path{
     get,
     path = "/api/workout-sessions/current",
     responses(
-        (status = 200, description = "Current workout session found", body = crate::adapters::http::dtos::workout_session::CurrentWorkoutSessionResponseDTO),
+        (status = 200, description = "Current workout session found", body = crate::adapters::http::dtos::CurrentWorkoutSessionResponseDTO),
         (status = 404, description = "not found"),
         (status = 500, description = "internal server error"),
     ),

@@ -1,12 +1,10 @@
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-use crate::domain::{
-    errors::measurement_error::MeasurementError,
-    value_objects::{
-        body_height_vo::BodyHeight, body_part_vo::BodyPartMeasure, body_weight_vo::BodyWeight,
-    },
-};
+use crate::domain::errors::MeasurementError;
+use crate::domain::value_objects::BodyHeight;
+use crate::domain::value_objects::BodyPartMeasure;
+use crate::domain::value_objects::BodyWeight;
 
 #[derive(Debug, Clone)]
 pub struct Measurement {

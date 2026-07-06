@@ -1,8 +1,7 @@
-use crate::domain::{
-    entities::{user::User, workout_template::WorkoutTemplate},
-    errors::domain_error::DomainError,
-    repositories::workout_template_repository::WorkoutTemplateRepository,
-};
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::entities::WorkoutTemplate;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -19,7 +18,7 @@ impl FindWorkoutTemplateById {
         &self,
         current_user: User,
         wt_id: Uuid,
-    ) -> Result<WorkoutTemplate, DomainError> {
+    ) -> Result<WorkoutTemplate, AppError> {
         let template = self.workout_repo.find_by_id(wt_id).await?;
 
         template.assert_owner(&current_user)?;

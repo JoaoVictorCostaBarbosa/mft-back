@@ -1,4 +1,4 @@
-use crate::domain::enums::role::Role;
+use crate::domain::enums::Role;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

@@ -1,11 +1,9 @@
-use crate::{
-    application::usecase::measurements::{
-        create_measurement::CreateMeasurement, delete_measurement::DeleteMeasurement,
-        get_all_user_measurements::GetAllUserMeasurements,
-        get_measurement_by_id::GetMeasurementById, soft_delete_measurement::SoftDeleteMeasurement,
-    },
-    domain::repositories::measurement_repository::MeasurementRepository,
-};
+use crate::application::usecase::measurements::CreateMeasurement;
+use crate::application::usecase::measurements::DeleteMeasurement;
+use crate::application::usecase::measurements::GetAllUserMeasurements;
+use crate::application::usecase::measurements::GetMeasurementById;
+use crate::application::usecase::measurements::SoftDeleteMeasurement;
+use crate::domain::repositories::MeasurementRepository;
 use std::sync::Arc;
 
 #[derive(Clone)]

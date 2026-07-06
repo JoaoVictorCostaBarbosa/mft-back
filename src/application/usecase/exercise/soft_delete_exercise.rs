@@ -1,12 +1,11 @@
-use crate::domain::{
-    entities::user::User, errors::domain_error::DomainError,
-    repositories::exercise_repository::ExerciseRepository,
-};
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::repositories::ExerciseRepository;
 use std::sync::Arc;
 use uuid::Uuid;
 
 pub struct SoftDeleteExercise {
-    pub exercise_repo: Arc<dyn ExerciseRepository>,
+    exercise_repo: Arc<dyn ExerciseRepository>,
 }
 
 impl SoftDeleteExercise {
@@ -14,7 +13,7 @@ impl SoftDeleteExercise {
         Self { exercise_repo }
     }
 
-    pub async fn execute(&self, id: Uuid, current_user: User) -> Result<(), DomainError> {
+    pub async fn execute(&self, id: Uuid, current_user: User) -> Result<(), AppError> {
         self.exercise_repo
             .soft_delete_exercise(id, current_user.id)
             .await?;

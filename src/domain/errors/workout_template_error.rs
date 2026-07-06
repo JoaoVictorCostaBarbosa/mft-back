@@ -1,4 +1,5 @@
-use crate::domain::{errors::exercise_error::ExerciseError, value_objects::name_vo::NameError};
+use crate::domain::errors::ExerciseError;
+use crate::domain::value_objects::NameError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -11,9 +12,6 @@ pub enum WorkoutTemplateError {
 
     #[error("exercise error: {0}")]
     Exercise(#[from] ExerciseError),
-
-    #[error("forbidden error")]
-    Forbidden,
 
     #[error("workout template not found")]
     NotFound,

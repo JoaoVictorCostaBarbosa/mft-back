@@ -1,9 +1,11 @@
-use crate::domain::{errors::bucket_error::BucketError, services::bucket_storage::BucketStorage};
+use crate::application::errors::StorageError;
+use crate::application::ports::FileStorage;
+use async_trait::async_trait;
 use aws_sdk_s3::{
     Client,
     config::{BehaviorVersion, Region},
 };
-use axum::async_trait;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct R2Storage {
@@ -41,29 +43,39 @@ impl R2Storage {
     }
 }
 
+fn profile_image_path(user_id: Uuid) -> String {
+    format!("users/{user_id}/profile")
+}
+
 #[async_trait]
-impl BucketStorage for R2Storage {
-    async fn upload_file(&self, path: &str, bytes: Vec<u8>) -> Result<String, BucketError> {
+impl FileStorage for R2Storage {
+    async fn upload_profile_image(
+        &self,
+        user_id: Uuid,
+        bytes: Vec<u8>,
+    ) -> Result<String, StorageError> {
+        let path = profile_image_path(user_id);
         self.client
             .put_object()
             .bucket(&self.bucket_name)
-            .key(path)
+            .key(&path)
             .body(bytes.into())
             .send()
             .await
-            .map_err(|err| BucketError::UploadFailed(err.to_string()))?;
+            .map_err(|err| StorageError::UploadFailed(err.to_string()))?;
 
         Ok(format!("{}/{}", self.public_base_url, path))
     }
 
-    async fn delete_file(&self, path: &str) -> Result<(), BucketError> {
+    async fn delete_profile_image(&self, user_id: Uuid) -> Result<(), StorageError> {
+        let path = profile_image_path(user_id);
         self.client
             .delete_object()
             .bucket(&self.bucket_name)
-            .key(path)
+            .key(&path)
             .send()
             .await
-            .map_err(|err| BucketError::DeleteFailed(err.to_string()))?;
+            .map_err(|err| StorageError::DeleteFailed(err.to_string()))?;
 
         Ok(())
     }

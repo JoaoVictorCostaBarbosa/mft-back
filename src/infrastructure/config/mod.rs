@@ -1,1 +1,3 @@
-pub mod env;
+mod env;
+
+pub use env::LoadEnv;

@@ -1,11 +1,8 @@
-use crate::{
-    application::dtos::workout_template::workout_template_update_request::WorkoutTemplateUpdateRequest,
-    domain::{
-        entities::{user::User, workout_template::WorkoutTemplate},
-        errors::domain_error::DomainError,
-        repositories::workout_template_repository::WorkoutTemplateRepository,
-    },
-};
+use crate::application::dtos::workout_template::WorkoutTemplateUpdateRequest;
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::entities::WorkoutTemplate;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -23,7 +20,7 @@ impl UpdateWorkoutTemplate {
         current_user: User,
         workout_id: Uuid,
         name: Option<String>,
-    ) -> Result<WorkoutTemplate, DomainError> {
+    ) -> Result<WorkoutTemplate, AppError> {
         let fields = WorkoutTemplateUpdateRequest { workout_id, name };
 
         let mut workout = self.workout_repo.find_by_id(fields.workout_id).await?;

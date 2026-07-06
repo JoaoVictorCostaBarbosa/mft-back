@@ -1,12 +1,12 @@
-use crate::adapters::http::dtos::user_dto::*;
-use crate::application::dtos::auth::google_login_request::GoogleLoginRequest;
-use crate::application::dtos::auth::login_request::LoginRequest;
-use crate::application::dtos::auth::user_create::UserCreate;
-use crate::application::dtos::auth::verify_request::VerifyRequest;
-use crate::application::dtos::user::email_change_request::EmailChangeRequest;
-use crate::application::dtos::user::password_change_request::PasswordChangeRequest;
-use crate::application::dtos::user::update_user_request::UpdateUserRequest;
-use crate::domain::entities::user::User;
+use crate::adapters::http::dtos::*;
+use crate::application::dtos::auth::GoogleLoginRequest;
+use crate::application::dtos::auth::LoginRequest;
+use crate::application::dtos::auth::UserCreate;
+use crate::application::dtos::auth::VerifyRequest;
+use crate::application::dtos::user::EmailChangeRequest;
+use crate::application::dtos::user::PasswordChangeRequest;
+use crate::application::dtos::user::UpdateUserRequest;
+use crate::domain::entities::User;
 
 pub struct UserMappers;
 
@@ -26,6 +26,7 @@ impl UserMappers {
             email: response.email.clone().value().to_string(),
             role: response.role.into(),
             url_img: response.url_img,
+            goal: response.goal.map(Into::into),
         }
     }
 

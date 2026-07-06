@@ -1,4 +1,5 @@
-use crate::adapters::http::dtos::role_dto::RoleDTO;
+use crate::adapters::http::dtos::GoalDTO;
+use crate::adapters::http::dtos::RoleDTO;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -28,6 +29,7 @@ pub struct UserResponseDTO {
     pub email: String,
     pub role: RoleDTO,
     pub url_img: Option<String>,
+    pub goal: Option<GoalDTO>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -60,6 +62,11 @@ pub struct UpdatePasswordDTO {
     pub id: Option<Uuid>,
     pub password: String,
     pub code: i32,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UpdateGoalDTO {
+    pub goal: GoalDTO,
 }
 
 #[derive(Debug, Serialize, ToSchema)]

@@ -1,4 +1,4 @@
-use crate::domain::enums::exercise_type::ExerciseType;
+use crate::domain::enums::ExerciseType;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

@@ -1,6 +1,5 @@
-use crate::domain::{
-    errors::workout_template_error::WorkoutTemplateError, value_objects::name_vo::NameError,
-};
+use crate::domain::errors::WorkoutTemplateError;
+use crate::domain::value_objects::NameError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -37,9 +36,6 @@ pub enum WorkoutPlanError {
 
     #[error("sequential routines require position")]
     SequentialRoutineRequiresPosition,
-
-    #[error("forbidden error")]
-    Forbidden,
 
     #[error("workout template error: {0}")]
     WorkoutTemplate(#[from] WorkoutTemplateError),

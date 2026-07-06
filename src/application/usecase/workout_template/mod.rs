@@ -1,8 +1,17 @@
-pub mod add_exercice_to_workout_template;
-pub mod create_workout_template;
-pub mod delete_workout_template;
-pub mod find_workout_template_by_id;
-pub mod read_workouts_template;
-pub mod remove_exercise_from_workout_template;
-pub mod soft_delete_workout_template;
-pub mod update_workout_template;
+mod add_exercice_to_workout_template;
+mod create_workout_template;
+mod delete_workout_template;
+mod find_workout_template_by_id;
+mod read_workouts_template;
+mod remove_exercise_from_workout_template;
+mod soft_delete_workout_template;
+mod update_workout_template;
+
+pub use add_exercice_to_workout_template::AddExerciseToWorkoutTemplate;
+pub use create_workout_template::CreateWorkoutTemplate;
+pub use delete_workout_template::DeleteWorkoutTemplate;
+pub use find_workout_template_by_id::FindWorkoutTemplateById;
+pub use read_workouts_template::ReadWorkoutsTemplate;
+pub use remove_exercise_from_workout_template::RemoveExerciseFromWorkoutTemplate;
+pub use soft_delete_workout_template::SoftDeleteWorkoutTemplate;
+pub use update_workout_template::UpdateWorkoutTemplate;

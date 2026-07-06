@@ -1,21 +1,17 @@
-use crate::{
-    application::{
-        dtos::user::update_user_request::UpdateUserRequest,
-        interfaces::pending_change_repository::PendingChangesRepository,
-    },
-    domain::{
-        commands::user_commands::UserUpdateFilds,
-        entities::user::User,
-        enums::role::Role,
-        errors::{domain_error::DomainError, permission_error::PermissionError},
-        repositories::user_repository::UserRepository,
-    },
-};
+use crate::application::dtos::user::UpdateUserRequest;
+use crate::application::errors::AppError;
+use crate::domain::commands::UserUpdateFields;
+use crate::domain::entities::User;
+use crate::domain::enums::Role;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::PermissionError;
+use crate::domain::repositories::PendingChangesRepository;
+use crate::domain::repositories::UserRepository;
 use std::sync::Arc;
 
 pub struct UpdateUser {
-    pub user_repo: Arc<dyn UserRepository>,
-    pub pending_change_repo: Arc<dyn PendingChangesRepository>,
+    user_repo: Arc<dyn UserRepository>,
+    pending_change_repo: Arc<dyn PendingChangesRepository>,
 }
 
 impl UpdateUser {
@@ -33,12 +29,14 @@ impl UpdateUser {
         &self,
         user_data: UpdateUserRequest,
         current_user: User,
-    ) -> Result<User, DomainError> {
+    ) -> Result<User, AppError> {
         let target_id = match user_data.id {
             None => current_user.id,
             Some(id) => {
                 if current_user.role != Role::Admin {
-                    return Err(DomainError::Permisson(PermissionError::Forbidden));
+                    return Err(AppError::Domain(DomainError::Permission(
+                        PermissionError::Forbidden,
+                    )));
                 }
                 id
             }
@@ -52,13 +50,15 @@ impl UpdateUser {
             .await?;
 
         if pending_change.code != user_data.code {
-            return Err(DomainError::Permisson(PermissionError::Forbidden));
+            return Err(AppError::Domain(DomainError::Permission(
+                PermissionError::Forbidden,
+            )));
         }
 
         let updated_user: User = self
             .user_repo
             .update_user(
-                UserUpdateFilds {
+                UserUpdateFields {
                     name: user_data.name,
                     ..Default::default()
                 },

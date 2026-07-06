@@ -1,9 +1,8 @@
-use crate::domain::{
-    commands::workout_template_command::WorkoutTemplateFilterFields,
-    entities::{user::User, workout_template::WorkoutTemplateSummary},
-    errors::domain_error::DomainError,
-    repositories::workout_template_repository::WorkoutTemplateRepository,
-};
+use crate::application::errors::AppError;
+use crate::domain::commands::WorkoutTemplateFilterFields;
+use crate::domain::entities::User;
+use crate::domain::entities::WorkoutTemplateSummary;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 
 pub struct ReadWorkoutsTemplate {
@@ -18,7 +17,7 @@ impl ReadWorkoutsTemplate {
     pub async fn execute(
         &self,
         current_user: User,
-    ) -> Result<Vec<WorkoutTemplateSummary>, DomainError> {
+    ) -> Result<Vec<WorkoutTemplateSummary>, AppError> {
         let workouts = self
             .workout_repo
             .read(WorkoutTemplateFilterFields {

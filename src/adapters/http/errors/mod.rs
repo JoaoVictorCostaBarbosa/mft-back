@@ -1,2 +1,4 @@
-pub mod http_error;
-pub mod jwt_erros;
+mod http_error;
+mod jwt_errors;
+
+pub use http_error::HttpError;

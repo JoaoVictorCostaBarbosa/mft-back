@@ -1,4 +1,4 @@
-use crate::domain::enums::workout_session_status::WorkoutSessionStatus;
+use crate::domain::enums::WorkoutSessionStatus;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 #[sqlx(type_name = "workout_session_status_enum", rename_all = "snake_case")]

@@ -1,8 +1,8 @@
 use super::claims::AccessClaims;
-use crate::domain::{
-    auth::token_data::AccessTokenData, enums::role::Role, errors::jwt_error::JwtError,
-    services::jwt::JwtProvider,
-};
+use crate::application::errors::JwtError;
+use crate::application::ports::AccessTokenData;
+use crate::application::ports::JwtProvider;
+use crate::domain::enums::Role;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 
@@ -26,7 +26,7 @@ impl JwtProvider for JwtService {
 
         let claims = AccessClaims {
             sub: user_id,
-            role,
+            role: role.into(),
             exp,
         };
 
@@ -41,7 +41,7 @@ impl JwtProvider for JwtService {
     fn verify_access(
         &self,
         token: &str,
-    ) -> Result<crate::domain::auth::token_data::AccessTokenData, JwtError> {
+    ) -> Result<crate::application::ports::AccessTokenData, JwtError> {
         let data = decode::<AccessClaims>(
             token,
             &DecodingKey::from_secret(self.access_secret.as_bytes()),
@@ -51,7 +51,7 @@ impl JwtProvider for JwtService {
 
         Ok(AccessTokenData {
             user_id: data.claims.sub,
-            role: data.claims.role,
+            role: data.claims.role.into(),
         })
     }
 }

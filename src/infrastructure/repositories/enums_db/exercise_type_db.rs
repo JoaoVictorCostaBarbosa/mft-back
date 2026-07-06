@@ -1,4 +1,4 @@
-use crate::domain::enums::exercise_type::ExerciseType;
+use crate::domain::enums::ExerciseType;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 #[sqlx(type_name = "exercise_type_enum", rename_all = "lowercase")]

@@ -1,14 +1,9 @@
-use crate::{
-    adapters::http::{errors::http_error::HttpError, extractors::auth_claims::AuthClaims},
-    application::app_state::app_state::AppState,
-    domain::{
-        entities::user::User,
-        errors::{
-            domain_error::DomainError, jwt_error::JwtError, permission_error::PermissionError,
-            repository_error::RepositoryError,
-        },
-    },
-};
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::AuthClaims;
+use crate::application::app_state::AppState;
+use crate::application::errors::AppError;
+use crate::application::errors::JwtError;
+use crate::domain::entities::User;
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
 use uuid::Uuid;
 
@@ -25,27 +20,18 @@ impl FromRequestParts<AppState> for CurrentUser {
         let AuthClaims(claims) = AuthClaims::from_request_parts(parts, state).await?;
 
         let user_id = Uuid::parse_str(claims.user_id.as_str()).map_err(|_| {
-            HttpError(DomainError::Jwt(JwtError::Internal(
+            HttpError(AppError::Jwt(JwtError::Internal(
                 "id in token is invalid".to_string(),
             )))
         })?;
 
-        let user = state.auth.user_repo.get_user_by_id(user_id).await;
+        let user = state
+            .auth
+            .get_authenticated_user
+            .execute(user_id)
+            .await
+            .map_err(HttpError)?;
 
-        match user {
-            Ok(u) => {
-                if u.deleted_at.is_some() {
-                    return Err(HttpError(DomainError::Permisson(
-                        PermissionError::Forbidden,
-                    )));
-                }
-
-                Ok(CurrentUser(u))
-            }
-            Err(DomainError::Repository(RepositoryError::NotFound(_))) => Err(HttpError(
-                DomainError::Permisson(PermissionError::Forbidden),
-            )),
-            Err(e) => Err(HttpError(e)),
-        }
+        Ok(CurrentUser(user))
     }
 }

@@ -1,14 +1,13 @@
-use crate::{
-    adapters::http::{extractors::current_user::CurrentUser, mappers::user_mapper::UserMappers},
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::UserMappers;
+use crate::application::app_state::AppState;
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
 #[utoipa::path{
     get,
     path = "/api/users/me",
     responses(
-        (status = 200, description = "Current user found", body = crate::adapters::http::dtos::user_dto::UserResponseDTO),
+        (status = 200, description = "Current user found", body = crate::adapters::http::dtos::UserResponseDTO),
         (status = 401, description = "unauthorized"),
         (status = 403, description = "denied permission"),
         (status = 500, description = "internal server error"),

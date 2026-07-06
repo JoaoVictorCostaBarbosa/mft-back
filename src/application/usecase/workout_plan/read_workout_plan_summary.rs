@@ -1,9 +1,8 @@
-use crate::domain::{
-    commands::workout_plan_command::WorkoutPlanFilterFields,
-    entities::{user::User, workout_plan::WorkoutPlanSummary},
-    errors::domain_error::DomainError,
-    repositories::workout_plan_repository::WorkoutPlanRepository,
-};
+use crate::application::errors::AppError;
+use crate::domain::commands::WorkoutPlanFilterFields;
+use crate::domain::entities::User;
+use crate::domain::entities::WorkoutPlanSummary;
+use crate::domain::repositories::WorkoutPlanRepository;
 use std::sync::Arc;
 
 pub struct ReadWorkoutPlanSummary {
@@ -15,10 +14,7 @@ impl ReadWorkoutPlanSummary {
         Self { workout_plan_repo }
     }
 
-    pub async fn execute(
-        &self,
-        current_user: User,
-    ) -> Result<Vec<WorkoutPlanSummary>, DomainError> {
+    pub async fn execute(&self, current_user: User) -> Result<Vec<WorkoutPlanSummary>, AppError> {
         let workout_plans = self
             .workout_plan_repo
             .read_summary(WorkoutPlanFilterFields {

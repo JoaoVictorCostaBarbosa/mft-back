@@ -1,40 +1,37 @@
-use crate::{
-    application::interfaces::{
-        pending_change_repository::PendingChangesRepository,
-        pending_user_repository::PendingUserRepository,
-    },
-    domain::repositories::{
-        exercise_repository::ExerciseRepository, measurement_repository::MeasurementRepository,
-        refresh_token_repository::RefreshTokenRepository, user_repository::UserRepository,
-        workout_plan_repository::WorkoutPlanRepository,
-        workout_session_repository::WorkoutSessionRepository,
-        workout_template_repository::WorkoutTemplateRepository,
-    },
-    infrastructure::repositories::postgres::{
-        exercise_repository_sqlx::ExerciseRepositorySqlx,
-        measurement_repository_sqlx::MeasurementRepositorySqlx,
-        pending_change_repository_sqlx::PendingChangeRepositorySqlx,
-        pending_user_repository_sqlx::PendingUserRepositorySqlx,
-        refresh_token_repository_sqlx::RefreshTokenRepositorySqlx,
-        user_repository_sqlx::UserRepositorySQLx,
-        workout_plan_repository_sqlx::WorkoutPlanRepositorySQLx,
-        workout_session_repository_sqlx::WorkoutSessionRepositorySqlx,
-        workout_template_repository_sqlx::WorkoutTemplateRepositorySQLX,
-    },
-};
+use crate::application::ports::ExerciseQueries;
+use crate::application::ports::WorkoutSessionQueries;
+use crate::domain::repositories::ExerciseRepository;
+use crate::domain::repositories::MeasurementRepository;
+use crate::domain::repositories::PendingChangesRepository;
+use crate::domain::repositories::PendingUserRepository;
+use crate::domain::repositories::RefreshTokenRepository;
+use crate::domain::repositories::UserRepository;
+use crate::domain::repositories::WorkoutPlanRepository;
+use crate::domain::repositories::WorkoutSessionRepository;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-pub mod error;
-pub mod exercise_repository_sqlx;
-pub mod measurement_repository_sqlx;
-pub mod pending_change_repository_sqlx;
-pub mod pending_user_repository_sqlx;
-pub mod refresh_token_repository_sqlx;
-pub mod user_repository_sqlx;
-pub mod workout_plan_repository_sqlx;
-pub mod workout_session_repository_sqlx;
-pub mod workout_template_repository_sqlx;
+mod error;
+mod exercise_repository_sqlx;
+mod measurement_repository_sqlx;
+mod pending_change_repository_sqlx;
+mod pending_user_repository_sqlx;
+mod refresh_token_repository_sqlx;
+mod user_repository_sqlx;
+mod workout_plan_repository_sqlx;
+mod workout_session_repository_sqlx;
+mod workout_template_repository_sqlx;
+
+pub use exercise_repository_sqlx::ExerciseRepositorySqlx;
+pub use measurement_repository_sqlx::MeasurementRepositorySqlx;
+pub use pending_change_repository_sqlx::PendingChangeRepositorySqlx;
+pub use pending_user_repository_sqlx::PendingUserRepositorySqlx;
+pub use refresh_token_repository_sqlx::RefreshTokenRepositorySqlx;
+pub use user_repository_sqlx::UserRepositorySQLx;
+pub use workout_plan_repository_sqlx::WorkoutPlanRepositorySQLx;
+pub use workout_session_repository_sqlx::WorkoutSessionRepositorySqlx;
+pub use workout_template_repository_sqlx::WorkoutTemplateRepositorySQLX;
 
 pub struct RepositoryBundle {
     pub user_repo: Arc<dyn UserRepository>,
@@ -43,8 +40,10 @@ pub struct RepositoryBundle {
     pub pending_change_repo: Arc<dyn PendingChangesRepository>,
     pub measurement_repo: Arc<dyn MeasurementRepository>,
     pub exercise_repo: Arc<dyn ExerciseRepository>,
+    pub exercise_queries: Arc<dyn ExerciseQueries>,
     pub workout_plan_repo: Arc<dyn WorkoutPlanRepository>,
     pub workout_session_repo: Arc<dyn WorkoutSessionRepository>,
+    pub workout_session_queries: Arc<dyn WorkoutSessionQueries>,
     pub workout_template_repo: Arc<dyn WorkoutTemplateRepository>,
 }
 
@@ -57,8 +56,10 @@ impl RepositoryBundle {
             pending_change_repo: Arc::new(PendingChangeRepositorySqlx::new(pool.clone())),
             measurement_repo: Arc::new(MeasurementRepositorySqlx::new(pool.clone())),
             exercise_repo: Arc::new(ExerciseRepositorySqlx::new(pool.clone())),
+            exercise_queries: Arc::new(ExerciseRepositorySqlx::new(pool.clone())),
             workout_plan_repo: Arc::new(WorkoutPlanRepositorySQLx::new(pool.clone())),
             workout_session_repo: Arc::new(WorkoutSessionRepositorySqlx::new(pool.clone())),
+            workout_session_queries: Arc::new(WorkoutSessionRepositorySqlx::new(pool.clone())),
             workout_template_repo: Arc::new(WorkoutTemplateRepositorySQLX::new(pool.clone())),
         }
     }

@@ -1,13 +1,15 @@
-use crate::{
-    adapters::http::handlers::user::{
-        delete_user::delete_user_handler, find_users::find_users_handler,
-        get_current_user::get_current_user_handler, restore_user::restore_user_handler,
-        send_code::send_code_handler, soft_delete_user::soft_delete_user_handler,
-        update_avatar::update_avatar_handler, update_email::update_email_handler,
-        update_password::update_password_handler, update_user::update_user_handler,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::handlers::user::delete_user_handler;
+use crate::adapters::http::handlers::user::find_users_handler;
+use crate::adapters::http::handlers::user::get_current_user_handler;
+use crate::adapters::http::handlers::user::restore_user_handler;
+use crate::adapters::http::handlers::user::send_code_handler;
+use crate::adapters::http::handlers::user::soft_delete_user_handler;
+use crate::adapters::http::handlers::user::update_avatar_handler;
+use crate::adapters::http::handlers::user::update_email_handler;
+use crate::adapters::http::handlers::user::update_goal_handler;
+use crate::adapters::http::handlers::user::update_password_handler;
+use crate::adapters::http::handlers::user::update_user_handler;
+use crate::application::app_state::AppState;
 use axum::{
     Router,
     routing::{delete, get, patch, post},
@@ -22,6 +24,7 @@ pub fn user_routers() -> Router<AppState> {
         .route("/users/me/email", patch(update_email_handler))
         .route("/users/me/password", patch(update_password_handler))
         .route("/users/me/avatar", patch(update_avatar_handler))
+        .route("/users/me/goal", patch(update_goal_handler))
         .route(
             "/users/:user_id/soft-delete",
             patch(soft_delete_user_handler),

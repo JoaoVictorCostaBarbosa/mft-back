@@ -1,8 +1,8 @@
-use crate::domain::{
-    enums::{equipment::Equipment, exercise_type::ExerciseType, muscle_group::MuscleGroup},
-    errors::exercise_error::ExerciseError,
-    value_objects::name_vo::Name,
-};
+use crate::domain::enums::Equipment;
+use crate::domain::enums::ExerciseType;
+use crate::domain::enums::MuscleGroup;
+use crate::domain::errors::ExerciseError;
+use crate::domain::value_objects::Name;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 

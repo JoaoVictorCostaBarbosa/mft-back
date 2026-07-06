@@ -1,19 +1,16 @@
-use crate::domain::{
-    entities::workout_session::{
-        CurrentWorkoutSession, FinishedWorkoutSession, WorkoutSession, WorkoutSessionExercise,
-        WorkoutSessionHistoryItem, WorkoutSessionSet, WorkoutSessionWeeklySummaryDay,
-    },
-    enums::set_type::SetType,
-    errors::domain_error::DomainError,
-};
-use axum::async_trait;
-use chrono::{DateTime, NaiveDate, Utc};
+use crate::domain::entities::FinishedWorkoutSession;
+use crate::domain::entities::WorkoutSession;
+use crate::domain::entities::WorkoutSessionExercise;
+use crate::domain::entities::WorkoutSessionSet;
+use crate::domain::enums::SetType;
+use crate::domain::errors::DomainError;
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 #[async_trait]
 pub trait WorkoutSessionRepository: Send + Sync {
     async fn start(&self, session: &WorkoutSession) -> Result<(), DomainError>;
-    async fn find_current(&self, user_id: Uuid) -> Result<CurrentWorkoutSession, DomainError>;
     async fn find_by_id(&self, session_id: Uuid) -> Result<WorkoutSession, DomainError>;
     async fn finish(&self, session: &FinishedWorkoutSession) -> Result<(), DomainError>;
     async fn cancel(&self, session_id: Uuid) -> Result<(), DomainError>;
@@ -53,12 +50,5 @@ pub trait WorkoutSessionRepository: Send + Sync {
         session_id: Uuid,
         session_exercise_id: Uuid,
     ) -> Result<(), DomainError>;
-    async fn history(&self, user_id: Uuid) -> Result<Vec<WorkoutSessionHistoryItem>, DomainError>;
-    async fn weekly_summary(
-        &self,
-        user_id: Uuid,
-        start_date: NaiveDate,
-        end_date: NaiveDate,
-    ) -> Result<Vec<WorkoutSessionWeeklySummaryDay>, DomainError>;
     async fn has_in_progress(&self, user_id: Uuid) -> Result<bool, DomainError>;
 }

@@ -1,10 +1,7 @@
-use crate::{
-    application::dtos::workout_template::workout_template_exercise_request::WorkoutTemplateExerciseRequest,
-    domain::{
-        entities::user::User, errors::domain_error::DomainError,
-        repositories::workout_template_repository::WorkoutTemplateRepository,
-    },
-};
+use crate::application::dtos::workout_template::WorkoutTemplateExerciseRequest;
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 
 pub struct RemoveExerciseFromWorkoutTemplate {
@@ -20,7 +17,7 @@ impl RemoveExerciseFromWorkoutTemplate {
         &self,
         current_user: User,
         request: WorkoutTemplateExerciseRequest,
-    ) -> Result<(), DomainError> {
+    ) -> Result<(), AppError> {
         let mut workout = self.workout_repo.find_by_id(request.workout_id).await?;
 
         workout.assert_owner(&current_user)?;

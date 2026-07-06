@@ -1,24 +1,28 @@
-use crate::{
-    domain::{
-        entities::workout_session::{
-            CurrentWorkoutSession, FinishedWorkoutSession, WorkoutSession,
-            WorkoutSessionDetailedExercise, WorkoutSessionExercise, WorkoutSessionExerciseDetails,
-            WorkoutSessionHistoryItem, WorkoutSessionSet, WorkoutSessionWeeklySummaryDay,
-        },
-        enums::set_type::SetType,
-        errors::{domain_error::DomainError, repository_error::RepositoryError},
-        repositories::workout_session_repository::WorkoutSessionRepository,
-    },
-    infrastructure::repositories::{
-        enums_db::{set_type_db::SetTypeDb, workout_session_status_db::WorkoutSessionStatusDb},
-        models::workout_session_model::{
-            CurrentWorkoutSessionRowModel, WorkoutSessionDetailedExerciseRowModel,
-            WorkoutSessionExerciseRowModel, WorkoutSessionHistoryRowModel, WorkoutSessionRowModel,
-            WorkoutSessionSetRowModel, WorkoutSessionWeeklySummaryRowModel,
-        },
-    },
-};
-use axum::async_trait;
+use crate::application::ports::WorkoutSessionQueries;
+use crate::application::read_models::CurrentWorkoutSession;
+use crate::application::read_models::WorkoutSessionDetailedExercise;
+use crate::application::read_models::WorkoutSessionExerciseDetails;
+use crate::application::read_models::WorkoutSessionHistoryItem;
+use crate::application::read_models::WorkoutSessionWeeklySummary;
+use crate::application::read_models::WorkoutSessionWeeklySummaryDay;
+use crate::domain::entities::FinishedWorkoutSession;
+use crate::domain::entities::WorkoutSession;
+use crate::domain::entities::WorkoutSessionExercise;
+use crate::domain::entities::WorkoutSessionSet;
+use crate::domain::enums::SetType;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::repositories::WorkoutSessionRepository;
+use crate::infrastructure::repositories::enums_db::SetTypeDb;
+use crate::infrastructure::repositories::enums_db::WorkoutSessionStatusDb;
+use crate::infrastructure::repositories::models::CurrentWorkoutSessionRowModel;
+use crate::infrastructure::repositories::models::WorkoutSessionDetailedExerciseRowModel;
+use crate::infrastructure::repositories::models::WorkoutSessionExerciseRowModel;
+use crate::infrastructure::repositories::models::WorkoutSessionHistoryRowModel;
+use crate::infrastructure::repositories::models::WorkoutSessionRowModel;
+use crate::infrastructure::repositories::models::WorkoutSessionSetRowModel;
+use crate::infrastructure::repositories::models::WorkoutSessionWeeklySummaryRowModel;
+use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -54,113 +58,6 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
         .await?;
 
         Ok(())
-    }
-
-    async fn find_current(&self, user_id: Uuid) -> Result<CurrentWorkoutSession, DomainError> {
-        let row = sqlx::query_as::<_, CurrentWorkoutSessionRowModel>(
-            r#"
-            SELECT
-                wl.id,
-                wl.workout_plan_id,
-                wt.id AS workout_template_id,
-                wt.name AS workout_template_name,
-                wl.started_at,
-                wl.status
-            FROM workout_log wl
-            JOIN workout_template wt
-                ON wt.id = wl.workout_template_id
-            WHERE wl.user_id = $1
-                AND wl.status = 'in_progress'
-                AND wl.deleted_at IS NULL
-                AND wt.deleted_at IS NULL
-            ORDER BY wl.started_at DESC
-            LIMIT 1
-            "#,
-        )
-        .bind(user_id)
-        .fetch_one(&self.pool)
-        .await?;
-
-        let exercises = sqlx::query_as::<_, WorkoutSessionDetailedExerciseRowModel>(
-            r#"
-            SELECT
-                el.id,
-                el.client_operation_id,
-                e.id AS exercise_id,
-                e.name AS exercise_name,
-                e.exercise_type,
-                e.equipment,
-                e.muscle_group,
-                el.position AS "order"
-            FROM exercise_log el
-            JOIN exercise e
-                ON e.id = el.exercise_id
-            WHERE el.workout_log_id = $1
-                AND e.deleted_at IS NULL
-            ORDER BY el.position ASC
-            "#,
-        )
-        .bind(row.id)
-        .fetch_all(&self.pool)
-        .await?;
-
-        let mut detailed_exercises = Vec::with_capacity(exercises.len());
-
-        for exercise in exercises {
-            let sets = sqlx::query_as::<_, WorkoutSessionSetRowModel>(
-                r#"
-                SELECT
-                    id,
-                    exercise_log_id AS session_exercise_id,
-                    client_operation_id,
-                    type AS set_type,
-                    weight::real AS weight,
-                    reps,
-                    created_at
-                FROM set_log
-                WHERE exercise_log_id = $1
-                ORDER BY created_at ASC
-                "#,
-            )
-            .bind(exercise.id)
-            .fetch_all(&self.pool)
-            .await?
-            .into_iter()
-            .map(|row| WorkoutSessionSet {
-                id: row.id,
-                session_exercise_id: row.session_exercise_id,
-                client_operation_id: row.client_operation_id,
-                set_type: row.set_type.into(),
-                weight: row.weight,
-                reps: row.reps as u32,
-                created_at: row.created_at,
-            })
-            .collect();
-
-            detailed_exercises.push(WorkoutSessionDetailedExercise {
-                id: exercise.id,
-                client_operation_id: exercise.client_operation_id,
-                exercise: WorkoutSessionExerciseDetails {
-                    id: exercise.exercise_id,
-                    name: exercise.exercise_name,
-                    exercise_type: exercise.exercise_type.into(),
-                    equipment: exercise.equipment.into(),
-                    muscle_group: exercise.muscle_group.into(),
-                },
-                order: exercise.order,
-                sets,
-            });
-        }
-
-        Ok(CurrentWorkoutSession {
-            id: row.id,
-            workout_plan_id: row.workout_plan_id,
-            workout_template_id: row.workout_template_id,
-            workout_template_name: row.workout_template_name,
-            started_at: row.started_at,
-            status: row.status.into(),
-            exercises: detailed_exercises,
-        })
     }
 
     async fn find_by_id(&self, session_id: Uuid) -> Result<WorkoutSession, DomainError> {
@@ -588,6 +485,135 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
         Ok(())
     }
 
+    async fn has_in_progress(&self, user_id: Uuid) -> Result<bool, DomainError> {
+        let exists = sqlx::query_scalar::<_, bool>(
+            r#"
+            SELECT EXISTS(
+                SELECT 1
+                FROM workout_log
+                WHERE user_id = $1
+                    AND status = 'in_progress'
+                    AND deleted_at IS NULL
+            )
+            "#,
+        )
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(exists)
+    }
+}
+
+#[async_trait]
+impl WorkoutSessionQueries for WorkoutSessionRepositorySqlx {
+    async fn find_current(&self, user_id: Uuid) -> Result<CurrentWorkoutSession, DomainError> {
+        let row = sqlx::query_as::<_, CurrentWorkoutSessionRowModel>(
+            r#"
+            SELECT
+                wl.id,
+                wl.workout_plan_id,
+                wt.id AS workout_template_id,
+                wt.name AS workout_template_name,
+                wl.started_at,
+                wl.status
+            FROM workout_log wl
+            JOIN workout_template wt
+                ON wt.id = wl.workout_template_id
+            WHERE wl.user_id = $1
+                AND wl.status = 'in_progress'
+                AND wl.deleted_at IS NULL
+                AND wt.deleted_at IS NULL
+            ORDER BY wl.started_at DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await?;
+
+        let exercises = sqlx::query_as::<_, WorkoutSessionDetailedExerciseRowModel>(
+            r#"
+            SELECT
+                el.id,
+                el.client_operation_id,
+                e.id AS exercise_id,
+                e.name AS exercise_name,
+                e.exercise_type,
+                e.equipment,
+                e.muscle_group,
+                el.position AS "order"
+            FROM exercise_log el
+            JOIN exercise e
+                ON e.id = el.exercise_id
+            WHERE el.workout_log_id = $1
+                AND e.deleted_at IS NULL
+            ORDER BY el.position ASC
+            "#,
+        )
+        .bind(row.id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut detailed_exercises = Vec::with_capacity(exercises.len());
+
+        for exercise in exercises {
+            let sets = sqlx::query_as::<_, WorkoutSessionSetRowModel>(
+                r#"
+                SELECT
+                    id,
+                    exercise_log_id AS session_exercise_id,
+                    client_operation_id,
+                    type AS set_type,
+                    weight::real AS weight,
+                    reps,
+                    created_at
+                FROM set_log
+                WHERE exercise_log_id = $1
+                ORDER BY created_at ASC
+                "#,
+            )
+            .bind(exercise.id)
+            .fetch_all(&self.pool)
+            .await?
+            .into_iter()
+            .map(|row| WorkoutSessionSet {
+                id: row.id,
+                session_exercise_id: row.session_exercise_id,
+                client_operation_id: row.client_operation_id,
+                set_type: row.set_type.into(),
+                weight: row.weight,
+                reps: row.reps as u32,
+                created_at: row.created_at,
+            })
+            .collect();
+
+            detailed_exercises.push(WorkoutSessionDetailedExercise {
+                id: exercise.id,
+                client_operation_id: exercise.client_operation_id,
+                exercise: WorkoutSessionExerciseDetails {
+                    id: exercise.exercise_id,
+                    name: exercise.exercise_name,
+                    exercise_type: exercise.exercise_type.into(),
+                    equipment: exercise.equipment.into(),
+                    muscle_group: exercise.muscle_group.into(),
+                },
+                order: exercise.order,
+                sets,
+            });
+        }
+
+        Ok(CurrentWorkoutSession {
+            id: row.id,
+            workout_plan_id: row.workout_plan_id,
+            workout_template_id: row.workout_template_id,
+            workout_template_name: row.workout_template_name,
+            started_at: row.started_at,
+            status: row.status.into(),
+            exercises: detailed_exercises,
+        })
+    }
+
     async fn history(&self, user_id: Uuid) -> Result<Vec<WorkoutSessionHistoryItem>, DomainError> {
         let rows = sqlx::query_as::<_, WorkoutSessionHistoryRowModel>(
             r#"
@@ -598,10 +624,21 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
                 wt.name AS workout_template_name,
                 wl.started_at,
                 wl.finished_at,
-                wl.status
+                wl.status,
+                agg.total_sets,
+                agg.total_volume_kg
             FROM workout_log wl
             JOIN workout_template wt
                 ON wt.id = wl.workout_template_id
+            LEFT JOIN LATERAL (
+                SELECT
+                    COUNT(sl.id) AS total_sets,
+                    COALESCE(SUM(sl.weight * sl.reps), 0)::float8 AS total_volume_kg
+                FROM exercise_log el
+                JOIN set_log sl
+                    ON sl.exercise_log_id = el.id
+                WHERE el.workout_log_id = wl.id
+            ) agg ON TRUE
             WHERE wl.user_id = $1
                 AND wl.deleted_at IS NULL
             ORDER BY wl.started_at DESC
@@ -621,6 +658,8 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
                 started_at: row.started_at,
                 finished_at: row.finished_at,
                 status: row.status.into(),
+                total_sets: row.total_sets,
+                total_volume_kg: row.total_volume_kg,
             })
             .collect())
     }
@@ -630,7 +669,7 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
         user_id: Uuid,
         start_date: NaiveDate,
         end_date: NaiveDate,
-    ) -> Result<Vec<WorkoutSessionWeeklySummaryDay>, DomainError> {
+    ) -> Result<WorkoutSessionWeeklySummary, DomainError> {
         let rows = sqlx::query_as::<_, WorkoutSessionWeeklySummaryRowModel>(
             r#"
             WITH days AS (
@@ -654,7 +693,7 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(rows
+        let days = rows
             .into_iter()
             .map(|row| WorkoutSessionWeeklySummaryDay {
                 date: row.date,
@@ -662,25 +701,29 @@ impl WorkoutSessionRepository for WorkoutSessionRepositorySqlx {
                 trained: row.session_id.is_some(),
                 session_id: row.session_id,
             })
-            .collect())
-    }
+            .collect();
 
-    async fn has_in_progress(&self, user_id: Uuid) -> Result<bool, DomainError> {
-        let exists = sqlx::query_scalar::<_, bool>(
+        // Sessões canceladas recebem deleted_at, então já ficam de fora.
+        let total_volume_kg: f64 = sqlx::query_scalar(
             r#"
-            SELECT EXISTS(
-                SELECT 1
-                FROM workout_log
-                WHERE user_id = $1
-                    AND status = 'in_progress'
-                    AND deleted_at IS NULL
-            )
+            SELECT COALESCE(SUM(sl.weight * sl.reps), 0)::float8
+            FROM set_log sl
+            JOIN exercise_log el ON el.id = sl.exercise_log_id
+            JOIN workout_log wl ON wl.id = el.workout_log_id
+            WHERE wl.user_id = $1
+                AND wl.deleted_at IS NULL
+                AND wl.started_at::date BETWEEN $2 AND $3
             "#,
         )
         .bind(user_id)
+        .bind(start_date)
+        .bind(end_date)
         .fetch_one(&self.pool)
         .await?;
 
-        Ok(exists)
+        Ok(WorkoutSessionWeeklySummary {
+            days,
+            total_volume_kg,
+        })
     }
 }

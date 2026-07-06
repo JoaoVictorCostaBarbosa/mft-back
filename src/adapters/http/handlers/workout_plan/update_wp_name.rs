@@ -1,14 +1,9 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_plan::WorkoutPlanUpdateNameRequestDTO,
-        errors::http_error::HttpError,
-        extractors::current_user::CurrentUser,
-        mappers::workout_plan_mapper::{
-            to_workout_plan_response, to_workout_plan_update_name_request,
-        },
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::WorkoutPlanUpdateNameRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_workout_plan_response;
+use crate::adapters::http::mappers::to_workout_plan_update_name_request;
+use crate::application::app_state::AppState;
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
 #[utoipa::path{

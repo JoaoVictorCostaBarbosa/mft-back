@@ -2,10 +2,9 @@ use chrono::{DateTime, Utc};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;
 
-use crate::infrastructure::repositories::enums_db::{
-    day_of_week_db::DayOfWeekDb, routine_item_type_db::RoutineItemTypeDb,
-    routine_mode_db::RoutineModeDb,
-};
+use crate::infrastructure::repositories::enums_db::DayOfWeekDb;
+use crate::infrastructure::repositories::enums_db::RoutineItemTypeDb;
+use crate::infrastructure::repositories::enums_db::RoutineModeDb;
 
 #[derive(Debug, FromRow)]
 pub struct WorkoutPlanRowModel {

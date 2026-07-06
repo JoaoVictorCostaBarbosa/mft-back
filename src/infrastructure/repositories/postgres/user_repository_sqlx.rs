@@ -1,15 +1,13 @@
-use crate::{
-    domain::{
-        commands::user_commands::UserUpdateFilds,
-        entities::user::User,
-        errors::{
-            domain_error::DomainError, repository_error::RepositoryError, user_error::UserError,
-        },
-        repositories::user_repository::UserRepository,
-    },
-    infrastructure::repositories::{enums_db::role_db::RoleDb, models::user_model::UserModel},
-};
-use axum::async_trait;
+use crate::domain::commands::UserUpdateFields;
+use crate::domain::entities::User;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::errors::UserError;
+use crate::domain::repositories::UserRepository;
+use crate::infrastructure::repositories::enums_db::GoalDb;
+use crate::infrastructure::repositories::enums_db::RoleDb;
+use crate::infrastructure::repositories::models::UserModel;
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -32,8 +30,8 @@ impl UserRepository for UserRepositorySQLx {
         sqlx::query(
             r#"
             INSERT INTO users
-            (id, name, email, password, google_sub, role, url_img, created_at, updated_at, deleted_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            (id, name, email, password, google_sub, role, url_img, goal, created_at, updated_at, deleted_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             "#,
         )
         .bind(user.id)
@@ -43,6 +41,7 @@ impl UserRepository for UserRepositorySQLx {
         .bind(user.google_sub.clone())
         .bind(role)
         .bind(user.url_img.clone())
+        .bind(user.goal.map(GoalDb::from))
         .bind(user.created_at)
         .bind(user.updated_at)
         .bind(user.deleted_at)
@@ -51,6 +50,97 @@ impl UserRepository for UserRepositorySQLx {
         .map_err(DomainError::from)?;
 
         Ok(())
+    }
+
+    async fn create_user_from_pending(
+        &self,
+        user: &User,
+        pending_user_id: Uuid,
+    ) -> Result<(), DomainError> {
+        let role: RoleDb = user.role.clone().into();
+
+        let mut tx = self.pool.begin().await.map_err(DomainError::from)?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO users
+            (id, name, email, password, google_sub, role, url_img, goal, created_at, updated_at, deleted_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            "#,
+        )
+        .bind(user.id)
+        .bind(user.name.value())
+        .bind(user.email.value())
+        .bind(user.password.clone())
+        .bind(user.google_sub.clone())
+        .bind(role)
+        .bind(user.url_img.clone())
+        .bind(user.goal.map(GoalDb::from))
+        .bind(user.created_at)
+        .bind(user.updated_at)
+        .bind(user.deleted_at)
+        .execute(&mut *tx)
+        .await
+        .map_err(DomainError::from)?;
+
+        sqlx::query(
+            r#"
+            DELETE FROM pending_users
+            WHERE id = $1
+            "#,
+        )
+        .bind(pending_user_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(DomainError::from)?;
+
+        tx.commit().await.map_err(DomainError::from)?;
+
+        Ok(())
+    }
+
+    async fn apply_email_change(
+        &self,
+        user_id: Uuid,
+        email: &str,
+        pending_change_id: Uuid,
+    ) -> Result<User, DomainError> {
+        let now: DateTime<Utc> = Utc::now();
+
+        let mut tx = self.pool.begin().await.map_err(DomainError::from)?;
+
+        let result = sqlx::query_as::<_, UserModel>(
+            r#"
+            UPDATE users
+            SET email = $1,
+                updated_at = $2
+            WHERE id = $3 AND deleted_at IS NULL
+            RETURNING *
+            "#,
+        )
+        .bind(email)
+        .bind(now)
+        .bind(user_id)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(DomainError::from)?;
+
+        sqlx::query(
+            r#"
+            DELETE FROM pending_changes
+            WHERE id = $1
+            "#,
+        )
+        .bind(pending_change_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(DomainError::from)?;
+
+        tx.commit().await.map_err(DomainError::from)?;
+
+        let updated_user = result.to_domain()?;
+
+        Ok(updated_user)
     }
 
     async fn get_user_by_id(&self, user_id: Uuid) -> Result<User, DomainError> {
@@ -161,7 +251,11 @@ impl UserRepository for UserRepositorySQLx {
         Ok(users)
     }
 
-    async fn update_user(&self, user: UserUpdateFilds, user_id: Uuid) -> Result<User, DomainError> {
+    async fn update_user(
+        &self,
+        user: UserUpdateFields,
+        user_id: Uuid,
+    ) -> Result<User, DomainError> {
         let now: DateTime<Utc> = Utc::now();
 
         let result = sqlx::query_as::<_, UserModel>(
@@ -171,8 +265,9 @@ impl UserRepository for UserRepositorySQLx {
                 email = COALESCE($2, email),
                 password = COALESCE($3, password),
                 url_img = COALESCE($4, url_img),
-                updated_at = $5
-            WHERE id = $6 AND deleted_at IS NULL
+                goal = COALESCE($5, goal),
+                updated_at = $6
+            WHERE id = $7 AND deleted_at IS NULL
             RETURNING *
             "#,
         )
@@ -180,6 +275,7 @@ impl UserRepository for UserRepositorySQLx {
         .bind(user.email)
         .bind(user.password)
         .bind(user.url_img)
+        .bind(user.goal.map(GoalDb::from))
         .bind(now)
         .bind(user_id)
         .fetch_one(&self.pool)

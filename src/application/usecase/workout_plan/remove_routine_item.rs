@@ -1,7 +1,6 @@
-use crate::domain::{
-    entities::user::User, errors::domain_error::DomainError,
-    repositories::workout_plan_repository::WorkoutPlanRepository,
-};
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::repositories::WorkoutPlanRepository;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -19,7 +18,7 @@ impl RemoveRoutineItem {
         current_user: User,
         workout_plan_id: Uuid,
         routine_item_id: Uuid,
-    ) -> Result<(), DomainError> {
+    ) -> Result<(), AppError> {
         let mut workout_plan = self.workout_plan_repo.find_by_id(workout_plan_id).await?;
 
         workout_plan.assert_owner(&current_user)?;

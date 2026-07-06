@@ -1,10 +1,10 @@
-use crate::domain::{
-    entities::{user::User, workout_session::WorkoutSessionExercise},
-    errors::{domain_error::DomainError, workout_log_error::WorkoutLogError},
-    repositories::workout_session_repository::WorkoutSessionRepository,
-};
+use crate::application::dtos::workout_session::AddExerciseToSessionInput;
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::entities::WorkoutSessionExercise;
+use crate::domain::errors::PermissionError;
+use crate::domain::repositories::WorkoutSessionRepository;
 use std::sync::Arc;
-use uuid::Uuid;
 
 pub struct AddExerciseToWorkoutSession {
     workout_session_repo: Arc<dyn WorkoutSessionRepository>,
@@ -20,20 +20,26 @@ impl AddExerciseToWorkoutSession {
     pub async fn execute(
         &self,
         current_user: User,
-        session_id: Uuid,
-        exercise_id: Uuid,
-        client_operation_id: Option<Uuid>,
-    ) -> Result<WorkoutSessionExercise, DomainError> {
-        let session = self.workout_session_repo.find_by_id(session_id).await?;
+        input: AddExerciseToSessionInput,
+    ) -> Result<WorkoutSessionExercise, AppError> {
+        let session = self
+            .workout_session_repo
+            .find_by_id(input.session_id)
+            .await?;
 
         if session.user_id != current_user.id {
-            return Err(WorkoutLogError::Forbidden.into());
+            return Err(PermissionError::Forbidden.into());
         }
 
         session.assert_in_progress()?;
 
-        self.workout_session_repo
-            .add_exercise(session_id, exercise_id, client_operation_id)
-            .await
+        Ok(self
+            .workout_session_repo
+            .add_exercise(
+                input.session_id,
+                input.exercise_id,
+                input.client_operation_id,
+            )
+            .await?)
     }
 }

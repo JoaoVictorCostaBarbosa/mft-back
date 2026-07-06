@@ -1,14 +1,14 @@
-use crate::domain::{
-    entities::user::User,
-    enums::role::Role,
-    errors::{domain_error::DomainError, permission_error::PermissionError},
-    repositories::user_repository::UserRepository,
-};
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::enums::Role;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::PermissionError;
+use crate::domain::repositories::UserRepository;
 use std::sync::Arc;
 use uuid::Uuid;
 
 pub struct DeleteUser {
-    pub user_repo: Arc<dyn UserRepository>,
+    user_repo: Arc<dyn UserRepository>,
 }
 
 impl DeleteUser {
@@ -16,9 +16,11 @@ impl DeleteUser {
         Self { user_repo }
     }
 
-    pub async fn execute(&self, user_id: Uuid, current_user: User) -> Result<(), DomainError> {
+    pub async fn execute(&self, user_id: Uuid, current_user: User) -> Result<(), AppError> {
         if current_user.role != Role::Admin {
-            return Err(DomainError::Permisson(PermissionError::Forbidden));
+            return Err(AppError::Domain(DomainError::Permission(
+                PermissionError::Forbidden,
+            )));
         }
 
         self.user_repo.delete_user(user_id).await?;

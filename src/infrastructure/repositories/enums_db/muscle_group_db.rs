@@ -1,4 +1,4 @@
-use crate::domain::enums::muscle_group::MuscleGroup;
+use crate::domain::enums::MuscleGroup;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 #[sqlx(type_name = "muscle_group_enum", rename_all = "snake_case")]

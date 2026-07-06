@@ -1,4 +1,4 @@
-use crate::domain::entities::refresh_token::RefreshToken;
+use crate::domain::entities::RefreshToken;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 

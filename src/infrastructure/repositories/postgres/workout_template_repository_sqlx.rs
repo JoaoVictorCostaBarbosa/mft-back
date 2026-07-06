@@ -1,22 +1,16 @@
-use crate::{
-    domain::{
-        commands::workout_template_command::WorkoutTemplateFilterFields,
-        entities::workout_template::{WorkoutTemplate, WorkoutTemplateSummary},
-        errors::{domain_error::DomainError, repository_error::RepositoryError},
-        repositories::workout_template_repository::WorkoutTemplateRepository,
-    },
-    infrastructure::repositories::{
-        enums_db::{
-            equipment_db::EquipmentDb, exercise_type_db::ExerciseTypeDb,
-            muscle_group_db::MuscleGroupDb,
-        },
-        models::{
-            exercise_model::ExerciseModel,
-            workout_template_model::{WorkoutTemplateModel, WorkoutTemplateRowModel},
-        },
-    },
-};
-use axum::async_trait;
+use crate::domain::commands::WorkoutTemplateFilterFields;
+use crate::domain::entities::WorkoutTemplate;
+use crate::domain::entities::WorkoutTemplateSummary;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::repositories::WorkoutTemplateRepository;
+use crate::infrastructure::repositories::enums_db::EquipmentDb;
+use crate::infrastructure::repositories::enums_db::ExerciseTypeDb;
+use crate::infrastructure::repositories::enums_db::MuscleGroupDb;
+use crate::infrastructure::repositories::models::ExerciseModel;
+use crate::infrastructure::repositories::models::WorkoutTemplateModel;
+use crate::infrastructure::repositories::models::WorkoutTemplateRowModel;
+use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{PgPool, QueryBuilder};
 use uuid::Uuid;

@@ -1,10 +1,8 @@
-use crate::{
-    adapters::http::{
-        cookies::CookieConfig, dtos::user_dto::LoginRequestDTO, errors::http_error::HttpError,
-        mappers::user_mapper::UserMappers,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::CookieConfig;
+use crate::adapters::http::dtos::LoginRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::mappers::UserMappers;
+use crate::application::app_state::AppState;
 use axum::{
     extract::{Extension, Json, State},
     http::StatusCode,

@@ -1,3 +1,7 @@
-pub mod workout_template_exercise_request;
-pub mod workout_template_request;
-pub mod workout_template_update_request;
+mod workout_template_exercise_request;
+mod workout_template_request;
+mod workout_template_update_request;
+
+pub use workout_template_exercise_request::WorkoutTemplateExerciseRequest;
+pub use workout_template_request::WorkoutTemplateRequest;
+pub use workout_template_update_request::WorkoutTemplateUpdateRequest;

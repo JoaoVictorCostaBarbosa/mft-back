@@ -1,17 +1,12 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_template::{
-            WorkoutTemplateExerciseDTO, WorkoutTemplateRequestDTO, WorkoutTemplateResponseDTO,
-            WorkoutTemplateSummaryResponse,
-        },
-        mappers::exercise_mapper::ExerciseMapper,
-    },
-    application::dtos::workout_template::{
-        workout_template_exercise_request::WorkoutTemplateExerciseRequest,
-        workout_template_request::WorkoutTemplateRequest,
-    },
-    domain::entities::workout_template::{WorkoutTemplate, WorkoutTemplateSummary},
-};
+use crate::adapters::http::dtos::WorkoutTemplateExerciseDTO;
+use crate::adapters::http::dtos::WorkoutTemplateRequestDTO;
+use crate::adapters::http::dtos::WorkoutTemplateResponseDTO;
+use crate::adapters::http::dtos::WorkoutTemplateSummaryResponse;
+use crate::adapters::http::mappers::ExerciseMapper;
+use crate::application::dtos::workout_template::WorkoutTemplateExerciseRequest;
+use crate::application::dtos::workout_template::WorkoutTemplateRequest;
+use crate::domain::entities::WorkoutTemplate;
+use crate::domain::entities::WorkoutTemplateSummary;
 
 pub fn to_request_workout_template(wt: WorkoutTemplateRequestDTO) -> WorkoutTemplateRequest {
     WorkoutTemplateRequest { name: wt.name }

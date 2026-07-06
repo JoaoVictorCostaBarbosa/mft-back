@@ -1,16 +1,11 @@
-use crate::{
-    domain::{
-        entities::{
-            workout_plan::{WorkoutPlan, WorkoutPlanRoutineItem, WorkoutPlanSummary},
-            workout_template::WorkoutTemplateSummary,
-        },
-        errors::workout_plan_error::WorkoutPlanError,
-        value_objects::name_vo::Name,
-    },
-    infrastructure::repositories::models::workout_plan_model::{
-        WorkoutPlanRoutineItemRowModel, WorkoutPlanRowModel,
-    },
-};
+use crate::domain::entities::WorkoutPlan;
+use crate::domain::entities::WorkoutPlanRoutineItem;
+use crate::domain::entities::WorkoutPlanSummary;
+use crate::domain::entities::WorkoutTemplateSummary;
+use crate::domain::errors::WorkoutPlanError;
+use crate::domain::value_objects::Name;
+use crate::infrastructure::repositories::models::WorkoutPlanRoutineItemRowModel;
+use crate::infrastructure::repositories::models::WorkoutPlanRowModel;
 
 pub fn to_workout_plan_row_model(wp: &WorkoutPlan) -> WorkoutPlanRowModel {
     WorkoutPlanRowModel {
