@@ -1,11 +1,8 @@
-use crate::{
-    adapters::http::{
-        errors::http_error::HttpError,
-        extractors::{current_user::CurrentUser, image_file::ImageFile},
-        mappers::user_mapper::UserMappers,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::extractors::ImageFile;
+use crate::adapters::http::mappers::UserMappers;
+use crate::application::app_state::AppState;
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
 #[utoipa::path{

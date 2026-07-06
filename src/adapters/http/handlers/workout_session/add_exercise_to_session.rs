@@ -1,11 +1,9 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_session::AddExerciseToWorkoutSessionRequestDTO,
-        errors::http_error::HttpError, extractors::current_user::CurrentUser,
-        mappers::workout_session_mapper::to_exercise_response,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::AddExerciseToWorkoutSessionRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_exercise_response;
+use crate::application::app_state::AppState;
+use crate::application::dtos::workout_session::AddExerciseToSessionInput;
 use axum::{
     Json,
     extract::{Path, State},
@@ -20,7 +18,7 @@ use uuid::Uuid;
     request_body = AddExerciseToWorkoutSessionRequestDTO,
     params(("session_id" = Uuid, description = "Workout session ID")),
     responses(
-        (status = 201, description = "Exercise added to workout session", body = crate::adapters::http::dtos::workout_session::WorkoutSessionExerciseResponseDTO),
+        (status = 201, description = "Exercise added to workout session", body = crate::adapters::http::dtos::WorkoutSessionExerciseResponseDTO),
         (status = 403, description = "denied permission"),
         (status = 404, description = "not found"),
         (status = 500, description = "internal server error"),
@@ -39,9 +37,11 @@ pub async fn add_exercise_to_workout_session_handler(
         .add_exercise
         .execute(
             current_user,
-            session_id,
-            request.exercise_id,
-            request.client_operation_id,
+            AddExerciseToSessionInput {
+                session_id,
+                exercise_id: request.exercise_id,
+                client_operation_id: request.client_operation_id,
+            },
         )
         .await
     {

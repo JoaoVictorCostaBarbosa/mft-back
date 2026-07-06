@@ -1,2 +1,4 @@
-pub mod claims;
-pub mod jwt_token_service;
+mod claims;
+mod jwt_token_service;
+
+pub use jwt_token_service::JwtService;

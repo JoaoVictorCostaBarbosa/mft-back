@@ -1,10 +1,8 @@
-use crate::{
-    adapters::http::{
-        dtos::user_dto::UserResponseDTO, errors::http_error::HttpError,
-        extractors::current_user::CurrentUser, mappers::user_mapper::UserMappers,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::UserResponseDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::UserMappers;
+use crate::application::app_state::AppState;
 use axum::{
     extract::{Json, State},
     http::StatusCode,

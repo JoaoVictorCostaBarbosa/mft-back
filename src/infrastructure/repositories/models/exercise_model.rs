@@ -1,12 +1,9 @@
-use crate::{
-    domain::{
-        entities::exercise::Exercise, errors::exercise_error::ExerciseError,
-        value_objects::name_vo::Name,
-    },
-    infrastructure::repositories::enums_db::{
-        equipment_db::EquipmentDb, exercise_type_db::ExerciseTypeDb, muscle_group_db::MuscleGroupDb,
-    },
-};
+use crate::domain::entities::Exercise;
+use crate::domain::errors::ExerciseError;
+use crate::domain::value_objects::Name;
+use crate::infrastructure::repositories::enums_db::EquipmentDb;
+use crate::infrastructure::repositories::enums_db::ExerciseTypeDb;
+use crate::infrastructure::repositories::enums_db::MuscleGroupDb;
 use chrono::{DateTime, Utc};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;

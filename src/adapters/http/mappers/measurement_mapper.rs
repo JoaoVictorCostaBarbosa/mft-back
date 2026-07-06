@@ -1,8 +1,7 @@
-use crate::{
-    adapters::http::dtos::measurement_dto::{CreateMeasurementDTO, MeasurementResponse},
-    application::dtos::measurements::create_measurement::CreateMeasurementRequest,
-    domain::entities::measurement::Measurement,
-};
+use crate::adapters::http::dtos::CreateMeasurementDTO;
+use crate::adapters::http::dtos::MeasurementResponse;
+use crate::application::dtos::measurements::CreateMeasurementRequest;
+use crate::domain::entities::Measurement;
 
 pub struct MeasurementMapper;
 
@@ -29,6 +28,7 @@ impl MeasurementMapper {
     pub fn domain_to_response(request: Measurement) -> MeasurementResponse {
         MeasurementResponse {
             id: request.id,
+            created_at: request.created_at,
             weight: request.weight.map(|v| v.value()),
             height: request.height.map(|v| v.value()),
             left_calf: request.left_calf.map(|v| v.value()),

@@ -1,13 +1,12 @@
+use crate::application::errors::AppError;
 use axum::{
     async_trait,
     extract::{FromRequest, Request},
 };
 use axum_extra::extract::Multipart;
 
-use crate::{
-    adapters::http::errors::http_error::HttpError,
-    domain::errors::{domain_error::DomainError, file_error::FileError},
-};
+use crate::adapters::http::errors::HttpError;
+use crate::application::errors::FileError;
 
 pub struct ImageFile(pub Vec<u8>);
 
@@ -21,30 +20,30 @@ where
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let mut multipart = Multipart::from_request(req, state)
             .await
-            .map_err(|_| HttpError(DomainError::File(FileError::FileReadError)))?;
+            .map_err(|_| HttpError(AppError::File(FileError::FileReadError)))?;
 
         while let Some(field) = multipart
             .next_field()
             .await
-            .map_err(|_| HttpError(DomainError::File(FileError::FileReadError)))?
+            .map_err(|_| HttpError(AppError::File(FileError::FileReadError)))?
         {
             if field.name() == Some("file") {
                 let mime = field
                     .content_type()
                     .map(|m| m.to_string())
-                    .ok_or_else(|| HttpError(DomainError::File(FileError::InvalidMimeType)))?;
+                    .ok_or_else(|| HttpError(AppError::File(FileError::InvalidMimeType)))?;
 
                 if mime != "image/png" && mime != "image/jpeg" {
-                    return Err(HttpError(DomainError::File(FileError::InvalidMimeType)));
+                    return Err(HttpError(AppError::File(FileError::InvalidMimeType)));
                 }
 
                 let bytes = field
                     .bytes()
                     .await
-                    .map_err(|_| HttpError(DomainError::File(FileError::FileReadError)))?;
+                    .map_err(|_| HttpError(AppError::File(FileError::FileReadError)))?;
 
                 if bytes.len() > 2_000_000 {
-                    return Err(HttpError(DomainError::File(FileError::FileTooLarge {
+                    return Err(HttpError(AppError::File(FileError::FileTooLarge {
                         max_size: 2_000_000,
                     })));
                 }
@@ -53,6 +52,6 @@ where
             }
         }
 
-        Err(HttpError(DomainError::File(FileError::MissingFile)))
+        Err(HttpError(AppError::File(FileError::MissingFile)))
     }
 }

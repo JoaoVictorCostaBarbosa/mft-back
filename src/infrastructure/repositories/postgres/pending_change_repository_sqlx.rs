@@ -1,18 +1,14 @@
-use axum::async_trait;
+use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::{
-    application::{
-        dtos::user::pending_change::PendingChange,
-        interfaces::pending_change_repository::PendingChangesRepository,
-    },
-    domain::errors::repository_error::RepositoryError,
-    infrastructure::repositories::models::pending_change_model::PendingChangeModel,
-};
+use crate::domain::entities::PendingChange;
+use crate::domain::errors::DomainError;
+use crate::domain::repositories::PendingChangesRepository;
+use crate::infrastructure::repositories::models::PendingChangeModel;
 
 pub struct PendingChangeRepositorySqlx {
-    pub pool: PgPool,
+    pool: PgPool,
 }
 
 impl PendingChangeRepositorySqlx {
@@ -26,7 +22,7 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
     async fn create_pending_change(
         &self,
         pending_change: PendingChange,
-    ) -> Result<(), RepositoryError> {
+    ) -> Result<(), DomainError> {
         sqlx::query(
             r#"
             INSERT INTO pending_change
@@ -40,7 +36,7 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
         .bind(pending_change.limit_date)
         .execute(&self.pool)
         .await
-        .map_err(RepositoryError::from)?;
+        .map_err(DomainError::from)?;
 
         Ok(())
     }
@@ -48,7 +44,7 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
     async fn get_valid_pending_change_by_user_id(
         &self,
         user_id: Uuid,
-    ) -> Result<PendingChange, RepositoryError> {
+    ) -> Result<PendingChange, DomainError> {
         self.clear_expired_pending_change().await?;
 
         let result = sqlx::query_as::<_, PendingChangeModel>(
@@ -60,12 +56,12 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
         .bind(user_id)
         .fetch_one(&self.pool)
         .await
-        .map_err(RepositoryError::from)?;
+        .map_err(DomainError::from)?;
 
         Ok(result.to())
     }
 
-    async fn delete_pending_change(&self, id: Uuid) -> Result<(), RepositoryError> {
+    async fn delete_pending_change(&self, id: Uuid) -> Result<(), DomainError> {
         sqlx::query(
             r#"
             DELETE FROM pending_change
@@ -75,12 +71,12 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
         .bind(id)
         .execute(&self.pool)
         .await
-        .map_err(RepositoryError::from)?;
+        .map_err(DomainError::from)?;
 
         Ok(())
     }
 
-    async fn clear_expired_pending_change(&self) -> Result<(), RepositoryError> {
+    async fn clear_expired_pending_change(&self) -> Result<(), DomainError> {
         sqlx::query(
             r#"
             DELETE FROM pending_change
@@ -89,7 +85,7 @@ impl PendingChangesRepository for PendingChangeRepositorySqlx {
         )
         .execute(&self.pool)
         .await
-        .map_err(RepositoryError::from)?;
+        .map_err(DomainError::from)?;
 
         Ok(())
     }

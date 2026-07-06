@@ -1,9 +1,9 @@
-use crate::domain::{
-    commands::workout_plan_command::WorkoutPlanFilterFields,
-    entities::workout_plan::{WorkoutPlan, WorkoutPlanRoutineItem, WorkoutPlanSummary},
-    errors::domain_error::DomainError,
-};
-use axum::async_trait;
+use crate::domain::commands::WorkoutPlanFilterFields;
+use crate::domain::entities::WorkoutPlan;
+use crate::domain::entities::WorkoutPlanRoutineItem;
+use crate::domain::entities::WorkoutPlanSummary;
+use crate::domain::errors::DomainError;
+use async_trait::async_trait;
 use uuid::Uuid;
 
 #[async_trait]

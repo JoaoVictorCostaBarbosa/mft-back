@@ -1,15 +1,12 @@
-use crate::{
-    adapters::http::handlers::workout_template::{
-        add_exercise_to_wt::add_exercise_to_workout_template_handler,
-        create_wt::create_workout_template_handler, delete_wt::delete_workout_template_handler,
-        find_wt_by_id::find_workout_template_by_id_handler,
-        read_user_wt::read_user_workout_templates_handler,
-        remove_exercise_from_wt::remove_exercise_from_workout_template_handler,
-        soft_delete_wt::soft_delete_workout_template_handler,
-        update_wt_name::update_workout_template_name_handler,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::handlers::workout_template::add_exercise_to_workout_template_handler;
+use crate::adapters::http::handlers::workout_template::create_workout_template_handler;
+use crate::adapters::http::handlers::workout_template::delete_workout_template_handler;
+use crate::adapters::http::handlers::workout_template::find_workout_template_by_id_handler;
+use crate::adapters::http::handlers::workout_template::read_user_workout_templates_handler;
+use crate::adapters::http::handlers::workout_template::remove_exercise_from_workout_template_handler;
+use crate::adapters::http::handlers::workout_template::soft_delete_workout_template_handler;
+use crate::adapters::http::handlers::workout_template::update_workout_template_name_handler;
+use crate::application::app_state::AppState;
 use axum::{
     Router,
     routing::{delete, get, patch, post},

@@ -1,8 +1,9 @@
-use crate::domain::{
-    entities::{exercise::Exercise, user::User},
-    errors::{exercise_error::ExerciseError, workout_template_error::WorkoutTemplateError},
-    value_objects::name_vo::Name,
-};
+use crate::domain::entities::Exercise;
+use crate::domain::entities::User;
+use crate::domain::errors::ExerciseError;
+use crate::domain::errors::PermissionError;
+use crate::domain::errors::WorkoutTemplateError;
+use crate::domain::value_objects::Name;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
@@ -63,9 +64,9 @@ impl WorkoutTemplate {
         Ok(())
     }
 
-    pub fn assert_owner(&self, user: &User) -> Result<(), WorkoutTemplateError> {
+    pub fn assert_owner(&self, user: &User) -> Result<(), PermissionError> {
         if self.user_id != user.id {
-            return Err(WorkoutTemplateError::Forbidden);
+            return Err(PermissionError::Forbidden);
         }
         Ok(())
     }

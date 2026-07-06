@@ -1,4 +1,4 @@
-use crate::domain::entities::user::User;
+use crate::domain::entities::User;
 
 pub struct GetCurrentUser;
 

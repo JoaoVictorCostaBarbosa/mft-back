@@ -1,12 +1,10 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_session::UpdateWorkoutSessionSetRequestDTO,
-        errors::http_error::HttpError,
-        extractors::current_user::CurrentUser,
-        mappers::workout_session_mapper::{to_set_response, to_set_type},
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::UpdateWorkoutSessionSetRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_set_response;
+use crate::adapters::http::mappers::to_set_type;
+use crate::application::app_state::AppState;
+use crate::application::dtos::workout_session::UpdateSessionSetInput;
 use axum::{
     Json,
     extract::{Path, State},
@@ -23,7 +21,7 @@ use uuid::Uuid;
         ("set_id" = Uuid, description = "Set ID")
     ),
     responses(
-        (status = 200, description = "Set updated", body = crate::adapters::http::dtos::workout_session::WorkoutSessionSetResponseDTO),
+        (status = 200, description = "Set updated", body = crate::adapters::http::dtos::WorkoutSessionSetResponseDTO),
         (status = 403, description = "denied permission"),
         (status = 404, description = "not found"),
         (status = 409, description = "session is not editable"),
@@ -44,11 +42,13 @@ pub async fn update_workout_session_set_handler(
         .update_set
         .execute(
             current_user,
-            session_id,
-            set_id,
-            to_set_type(request.set_type),
-            request.weight,
-            request.reps,
+            UpdateSessionSetInput {
+                session_id,
+                set_id,
+                set_type: to_set_type(request.set_type),
+                weight: request.weight,
+                reps: request.reps,
+            },
         )
         .await
     {

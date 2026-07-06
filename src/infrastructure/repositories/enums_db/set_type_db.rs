@@ -1,4 +1,4 @@
-use crate::domain::enums::set_type::SetType;
+use crate::domain::enums::SetType;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 #[sqlx(type_name = "set_type_enum", rename_all = "snake_case")]

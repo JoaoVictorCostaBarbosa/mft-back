@@ -1,6 +1,6 @@
-use crate::domain::value_objects::{
-    email_vo::EmailError, name_vo::NameError, password_vo::PasswordError,
-};
+use crate::domain::value_objects::EmailError;
+use crate::domain::value_objects::NameError;
+use crate::domain::value_objects::PasswordError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

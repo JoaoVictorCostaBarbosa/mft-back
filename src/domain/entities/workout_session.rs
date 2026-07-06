@@ -1,13 +1,10 @@
-use crate::domain::{
-    enums::{
-        equipment::Equipment, exercise_type::ExerciseType, muscle_group::MuscleGroup,
-        set_type::SetType, workout_session_status::WorkoutSessionStatus,
-    },
-    errors::workout_log_error::WorkoutLogError,
-};
-use chrono::{DateTime, NaiveDate, Utc};
+use crate::domain::enums::SetType;
+use crate::domain::enums::WorkoutSessionStatus;
+use crate::domain::errors::WorkoutSessionError;
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
+#[derive(Debug)]
 pub struct WorkoutSession {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -18,32 +15,7 @@ pub struct WorkoutSession {
     pub status: WorkoutSessionStatus,
 }
 
-pub struct CurrentWorkoutSession {
-    pub id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
-    pub workout_template_name: String,
-    pub started_at: DateTime<Utc>,
-    pub status: WorkoutSessionStatus,
-    pub exercises: Vec<WorkoutSessionDetailedExercise>,
-}
-
-pub struct WorkoutSessionDetailedExercise {
-    pub id: Uuid,
-    pub client_operation_id: Option<Uuid>,
-    pub exercise: WorkoutSessionExerciseDetails,
-    pub order: i32,
-    pub sets: Vec<WorkoutSessionSet>,
-}
-
-pub struct WorkoutSessionExerciseDetails {
-    pub id: Uuid,
-    pub name: String,
-    pub exercise_type: ExerciseType,
-    pub equipment: Equipment,
-    pub muscle_group: MuscleGroup,
-}
-
+#[derive(Debug)]
 pub struct FinishedWorkoutSession {
     pub id: Uuid,
     pub status: WorkoutSessionStatus,
@@ -69,23 +41,6 @@ pub struct WorkoutSessionSet {
     pub created_at: DateTime<Utc>,
 }
 
-pub struct WorkoutSessionHistoryItem {
-    pub id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
-    pub workout_template_name: String,
-    pub started_at: DateTime<Utc>,
-    pub finished_at: Option<DateTime<Utc>>,
-    pub status: WorkoutSessionStatus,
-}
-
-pub struct WorkoutSessionWeeklySummaryDay {
-    pub date: NaiveDate,
-    pub day_of_week: String,
-    pub trained: bool,
-    pub session_id: Option<Uuid>,
-}
-
 impl WorkoutSession {
     pub fn start(user_id: Uuid, workout_plan_id: Uuid, workout_template_id: Uuid) -> Self {
         Self {
@@ -102,13 +57,13 @@ impl WorkoutSession {
     pub fn finish(
         &self,
         finished_at: Option<DateTime<Utc>>,
-    ) -> Result<FinishedWorkoutSession, WorkoutLogError> {
+    ) -> Result<FinishedWorkoutSession, WorkoutSessionError> {
         self.assert_in_progress()?;
 
         let finished_at = finished_at.unwrap_or_else(Utc::now);
 
         if finished_at < self.started_at {
-            return Err(WorkoutLogError::InvalidFinishedAt);
+            return Err(WorkoutSessionError::InvalidFinishedAt);
         }
 
         Ok(FinishedWorkoutSession {
@@ -119,11 +74,80 @@ impl WorkoutSession {
         })
     }
 
-    pub fn assert_in_progress(&self) -> Result<(), WorkoutLogError> {
+    pub fn assert_in_progress(&self) -> Result<(), WorkoutSessionError> {
         match self.status {
             WorkoutSessionStatus::InProgress => Ok(()),
-            WorkoutSessionStatus::Finished => Err(WorkoutLogError::AlreadyFinished),
-            WorkoutSessionStatus::Cancelled => Err(WorkoutLogError::AlreadyCancelled),
+            WorkoutSessionStatus::Finished => Err(WorkoutSessionError::AlreadyFinished),
+            WorkoutSessionStatus::Cancelled => Err(WorkoutSessionError::AlreadyCancelled),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Duration;
+
+    fn session() -> WorkoutSession {
+        WorkoutSession::start(Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4())
+    }
+
+    #[test]
+    fn start_creates_in_progress_session() {
+        let session = session();
+
+        assert_eq!(session.status, WorkoutSessionStatus::InProgress);
+        assert!(session.finished_at.is_none());
+    }
+
+    #[test]
+    fn finish_in_progress_session_returns_finished() {
+        let session = session();
+        let finished_at = session.started_at + Duration::minutes(45);
+
+        let finished = session.finish(Some(finished_at)).unwrap();
+
+        assert_eq!(finished.id, session.id);
+        assert_eq!(finished.status, WorkoutSessionStatus::Finished);
+        assert_eq!(finished.finished_at, finished_at);
+    }
+
+    #[test]
+    fn finish_without_timestamp_uses_now() {
+        let session = session();
+
+        let finished = session.finish(None).unwrap();
+
+        assert!(finished.finished_at >= session.started_at);
+    }
+
+    #[test]
+    fn finish_before_started_at_is_rejected() {
+        let session = session();
+        let finished_at = session.started_at - Duration::minutes(1);
+
+        let err = session.finish(Some(finished_at)).unwrap_err();
+
+        assert!(matches!(err, WorkoutSessionError::InvalidFinishedAt));
+    }
+
+    #[test]
+    fn finish_already_finished_session_is_rejected() {
+        let mut session = session();
+        session.status = WorkoutSessionStatus::Finished;
+
+        let err = session.finish(None).unwrap_err();
+
+        assert!(matches!(err, WorkoutSessionError::AlreadyFinished));
+    }
+
+    #[test]
+    fn finish_cancelled_session_is_rejected() {
+        let mut session = session();
+        session.status = WorkoutSessionStatus::Cancelled;
+
+        let err = session.finish(None).unwrap_err();
+
+        assert!(matches!(err, WorkoutSessionError::AlreadyCancelled));
     }
 }

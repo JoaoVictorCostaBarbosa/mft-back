@@ -1,11 +1,11 @@
-use crate::domain::{
-    entities::{user::User, workout_session::WorkoutSessionSet},
-    enums::set_type::SetType,
-    errors::{domain_error::DomainError, workout_log_error::WorkoutLogError},
-    repositories::workout_session_repository::WorkoutSessionRepository,
-};
+use crate::application::dtos::workout_session::UpdateSessionSetInput;
+use crate::application::errors::AppError;
+use crate::domain::entities::User;
+use crate::domain::entities::WorkoutSessionSet;
+use crate::domain::errors::PermissionError;
+use crate::domain::errors::WorkoutSessionError;
+use crate::domain::repositories::WorkoutSessionRepository;
 use std::sync::Arc;
-use uuid::Uuid;
 
 pub struct UpdateWorkoutSessionSet {
     workout_session_repo: Arc<dyn WorkoutSessionRepository>,
@@ -21,30 +21,36 @@ impl UpdateWorkoutSessionSet {
     pub async fn execute(
         &self,
         current_user: User,
-        session_id: Uuid,
-        set_id: Uuid,
-        set_type: SetType,
-        weight: f32,
-        reps: u32,
-    ) -> Result<WorkoutSessionSet, DomainError> {
-        if reps == 0 {
-            return Err(WorkoutLogError::InvalidReps.into());
+        input: UpdateSessionSetInput,
+    ) -> Result<WorkoutSessionSet, AppError> {
+        if input.reps == 0 {
+            return Err(WorkoutSessionError::InvalidReps.into());
         }
 
-        if weight < 0.0 {
-            return Err(WorkoutLogError::InvalidWeight.into());
+        if input.weight < 0.0 {
+            return Err(WorkoutSessionError::InvalidWeight.into());
         }
 
-        let session = self.workout_session_repo.find_by_id(session_id).await?;
+        let session = self
+            .workout_session_repo
+            .find_by_id(input.session_id)
+            .await?;
 
         if session.user_id != current_user.id {
-            return Err(WorkoutLogError::Forbidden.into());
+            return Err(PermissionError::Forbidden.into());
         }
 
         session.assert_in_progress()?;
 
-        self.workout_session_repo
-            .update_set(session_id, set_id, set_type, weight, reps)
-            .await
+        Ok(self
+            .workout_session_repo
+            .update_set(
+                input.session_id,
+                input.set_id,
+                input.set_type,
+                input.weight,
+                input.reps,
+            )
+            .await?)
     }
 }

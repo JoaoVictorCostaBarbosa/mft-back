@@ -1,8 +1,8 @@
-use crate::{
-    adapters::http::{cookies::ACCESS_TOKEN_COOKIE, errors::http_error::HttpError},
-    application::app_state::app_state::AppState,
-    domain::{auth::token_data::AccessTokenData, errors::domain_error::DomainError},
-};
+use crate::adapters::http::ACCESS_TOKEN_COOKIE;
+use crate::adapters::http::errors::HttpError;
+use crate::application::app_state::AppState;
+use crate::application::errors::AppError;
+use crate::application::ports::AccessTokenData;
 use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
 use axum_extra::extract::cookie::CookieJar;
 
@@ -20,14 +20,14 @@ impl FromRequestParts<AppState> for AuthClaims {
         let token = jar
             .get(ACCESS_TOKEN_COOKIE)
             .map(|cookie| cookie.value())
-            .ok_or(HttpError(DomainError::Jwt(
-                crate::domain::errors::jwt_error::JwtError::MissingClaim,
+            .ok_or(HttpError(AppError::Jwt(
+                crate::application::errors::JwtError::MissingClaim,
             )))?;
 
         let claims = state
             .jwt_service
             .verify_access(token)
-            .map_err(|e| HttpError(DomainError::Jwt(e)))?;
+            .map_err(|e| HttpError(AppError::Jwt(e)))?;
 
         Ok(AuthClaims(claims))
     }

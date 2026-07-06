@@ -1,11 +1,8 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_session::StartWorkoutSessionRequestDTO, errors::http_error::HttpError,
-        extractors::current_user::CurrentUser,
-        mappers::workout_session_mapper::to_session_response,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::StartWorkoutSessionRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_session_response;
+use crate::application::app_state::AppState;
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
 #[utoipa::path{
@@ -13,7 +10,7 @@ use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
     path = "/api/workout-sessions",
     request_body = StartWorkoutSessionRequestDTO,
     responses(
-        (status = 201, description = "Workout session started", body = crate::adapters::http::dtos::workout_session::WorkoutSessionResponseDTO),
+        (status = 201, description = "Workout session started", body = crate::adapters::http::dtos::WorkoutSessionResponseDTO),
         (status = 403, description = "denied permission"),
         (status = 409, description = "session already in progress"),
         (status = 500, description = "internal server error"),

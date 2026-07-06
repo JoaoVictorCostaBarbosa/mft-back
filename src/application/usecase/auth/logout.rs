@@ -1,13 +1,12 @@
-use crate::domain::{
-    errors::{domain_error::DomainError, permission_error::PermissionError},
-    repositories::refresh_token_repository::RefreshTokenRepository,
-    services::refresh_token_hasher::RefreshTokenHasher,
-};
+use crate::application::errors::AppError;
+use crate::application::ports::RefreshTokenHasher;
+use crate::domain::errors::PermissionError;
+use crate::domain::repositories::RefreshTokenRepository;
 use std::sync::Arc;
 
 pub struct Logout {
-    pub refresh_repo: Arc<dyn RefreshTokenRepository>,
-    pub hash_service: Arc<dyn RefreshTokenHasher>,
+    refresh_repo: Arc<dyn RefreshTokenRepository>,
+    hash_service: Arc<dyn RefreshTokenHasher>,
 }
 
 impl Logout {
@@ -21,7 +20,7 @@ impl Logout {
         }
     }
 
-    pub async fn execute(&self, token: String) -> Result<(), DomainError> {
+    pub async fn execute(&self, token: String) -> Result<(), AppError> {
         let hashed_token = self.hash_service.hash(&token)?;
 
         let refresh_token = match self.refresh_repo.find_valid_by_hash(&hashed_token).await {

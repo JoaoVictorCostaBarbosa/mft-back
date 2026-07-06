@@ -1,9 +1,9 @@
-use crate::domain::{
-    commands::exercise_commands::{ExerciseFilterFields, ExerciseUpdateFields},
-    entities::{exercise::Exercise, pagination::Paginated},
-    errors::domain_error::DomainError,
-};
-use axum::async_trait;
+use crate::domain::commands::ExerciseFilterFields;
+use crate::domain::commands::ExerciseUpdateFields;
+use crate::domain::entities::Exercise;
+use crate::domain::entities::Paginated;
+use crate::domain::errors::DomainError;
+use async_trait::async_trait;
 use uuid::Uuid;
 
 #[async_trait]

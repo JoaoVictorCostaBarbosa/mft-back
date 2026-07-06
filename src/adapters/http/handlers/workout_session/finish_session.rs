@@ -1,11 +1,9 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_session::FinishWorkoutSessionRequestDTO, errors::http_error::HttpError,
-        extractors::current_user::CurrentUser,
-        mappers::workout_session_mapper::to_finished_response,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::FinishWorkoutSessionRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_finished_response;
+use crate::application::app_state::AppState;
+use crate::application::dtos::workout_session::FinishWorkoutSessionInput;
 use axum::{
     Json,
     extract::{Path, State},
@@ -19,7 +17,7 @@ use uuid::Uuid;
     request_body = FinishWorkoutSessionRequestDTO,
     params(("session_id" = Uuid, description = "Workout session ID")),
     responses(
-        (status = 200, description = "Workout session finished", body = crate::adapters::http::dtos::workout_session::FinishedWorkoutSessionResponseDTO),
+        (status = 200, description = "Workout session finished", body = crate::adapters::http::dtos::FinishedWorkoutSessionResponseDTO),
         (status = 403, description = "denied permission"),
         (status = 404, description = "not found"),
         (status = 422, description = "invalid finished_at"),
@@ -37,7 +35,13 @@ pub async fn finish_workout_session_handler(
     match state
         .workout_session
         .finish
-        .execute(current_user, session_id, request.finished_at)
+        .execute(
+            current_user,
+            FinishWorkoutSessionInput {
+                session_id,
+                finished_at: request.finished_at,
+            },
+        )
         .await
     {
         Ok(session) => Json(to_finished_response(session)).into_response(),

@@ -1,14 +1,9 @@
-use crate::{
-    domain::{
-        entities::{
-            exercise::Exercise,
-            workout_template::{WorkoutTemplate, WorkoutTemplateSummary},
-        },
-        errors::workout_template_error::WorkoutTemplateError,
-        value_objects::name_vo::Name,
-    },
-    infrastructure::repositories::models::exercise_model::ExerciseModel,
-};
+use crate::domain::entities::Exercise;
+use crate::domain::entities::WorkoutTemplate;
+use crate::domain::entities::WorkoutTemplateSummary;
+use crate::domain::errors::WorkoutTemplateError;
+use crate::domain::value_objects::Name;
+use crate::infrastructure::repositories::models::ExerciseModel;
 use chrono::{DateTime, Utc};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;

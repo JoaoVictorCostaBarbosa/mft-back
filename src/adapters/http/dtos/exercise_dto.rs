@@ -1,16 +1,13 @@
-use crate::adapters::http::dtos::{
-    equipment_dto::EquipmentDTO, exercise_type_dto::ExerciseTypeDTO,
-    muscle_group_dto::MuscleGroupDTO,
-};
-use crate::domain::commands::exercise_commands::ExercisePaginationFields;
-use crate::domain::entities::pagination::Paginated;
+use crate::adapters::http::dtos::EquipmentDTO;
+use crate::adapters::http::dtos::ExerciseTypeDTO;
+use crate::adapters::http::dtos::MuscleGroupDTO;
+use crate::adapters::http::dtos::SetTypeDTO;
+use crate::application::pagination::PageRequest;
+use crate::domain::entities::Paginated;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
-
-const DEFAULT_PAGE: u32 = 1;
-const DEFAULT_PER_PAGE: u32 = 20;
-const MAX_PER_PAGE: u32 = 100;
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct ExerciseRequest {
@@ -39,9 +36,50 @@ pub struct ExerciseUpdateRequest {
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
+pub struct ExerciseLastPerformancesRequestDTO {
+    pub exercise_ids: Vec<Uuid>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ExerciseLastPerformancesResponseDTO {
+    pub items: Vec<ExerciseLastPerformanceItemDTO>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ExerciseLastPerformanceItemDTO {
+    pub exercise_id: Uuid,
+    pub last_session_id: Uuid,
+    pub performed_at: DateTime<Utc>,
+    pub sets: Vec<ExerciseLastPerformanceSetDTO>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ExerciseLastPerformanceSetDTO {
+    pub set_type: SetTypeDTO,
+    pub weight: f32,
+    pub reps: u32,
+    pub order: u32,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ExercisePersonalRecordDTO {
+    pub exercise_id: Uuid,
+    pub exercise_name: String,
+    pub max_weight: f32,
+    pub reps: u32,
+    pub achieved_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ExercisePersonalRecordsResponseDTO {
+    pub items: Vec<ExercisePersonalRecordDTO>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ExercisePaginationQuery {
     pub page: Option<u32>,
     pub per_page: Option<u32>,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -67,17 +105,8 @@ pub struct ExercisePaginationMetaDTO {
 }
 
 impl ExercisePaginationQuery {
-    pub fn to_pagination_fields(&self) -> ExercisePaginationFields {
-        let limit = self
-            .per_page
-            .unwrap_or(DEFAULT_PER_PAGE)
-            .clamp(1, MAX_PER_PAGE);
-        let page = self.page.unwrap_or(DEFAULT_PAGE).max(1);
-
-        ExercisePaginationFields {
-            page,
-            per_page: limit,
-        }
+    pub fn to_page_request(&self) -> PageRequest {
+        PageRequest::new(self.page, self.per_page)
     }
 }
 

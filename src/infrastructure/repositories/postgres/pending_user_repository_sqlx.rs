@@ -1,12 +1,8 @@
-use crate::{
-    application::{
-        interfaces::pending_user_repository::PendingUserRepository,
-        resources::pending_user::PendingUser,
-    },
-    domain::errors::repository_error::RepositoryError,
-    infrastructure::repositories::models::pending_user_model::PendingUserModel,
-};
-use axum::async_trait;
+use crate::domain::entities::PendingUser;
+use crate::domain::errors::DomainError;
+use crate::domain::repositories::PendingUserRepository;
+use crate::infrastructure::repositories::models::PendingUserModel;
+use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -22,7 +18,7 @@ impl PendingUserRepositorySqlx {
 
 #[async_trait]
 impl PendingUserRepository for PendingUserRepositorySqlx {
-    async fn create_pending_user(&self, pending_user: PendingUser) -> Result<(), RepositoryError> {
+    async fn create_pending_user(&self, pending_user: PendingUser) -> Result<(), DomainError> {
         sqlx::query(
             r#"
             INSERT INTO pending_users
@@ -38,7 +34,7 @@ impl PendingUserRepository for PendingUserRepositorySqlx {
         .bind(pending_user.limit_date)
         .execute(&self.pool)
         .await
-        .map_err(RepositoryError::from)?;
+        .map_err(DomainError::from)?;
 
         Ok(())
     }
@@ -46,7 +42,7 @@ impl PendingUserRepository for PendingUserRepositorySqlx {
     async fn get_valid_pending_user_by_email(
         &self,
         email: &str,
-    ) -> Result<PendingUser, RepositoryError> {
+    ) -> Result<PendingUser, DomainError> {
         self.clear_expired_pending_user().await?;
 
         let pending_user = sqlx::query_as::<_, PendingUserModel>(
@@ -58,12 +54,12 @@ impl PendingUserRepository for PendingUserRepositorySqlx {
         .bind(email)
         .fetch_one(&self.pool)
         .await
-        .map_err(RepositoryError::from)?;
+        .map_err(DomainError::from)?;
 
         Ok(pending_user.to())
     }
 
-    async fn delete_pending_user(&self, id: Uuid) -> Result<(), RepositoryError> {
+    async fn delete_pending_user(&self, id: Uuid) -> Result<(), DomainError> {
         sqlx::query(
             r#"
             DELETE FROM pending_users
@@ -73,12 +69,12 @@ impl PendingUserRepository for PendingUserRepositorySqlx {
         .bind(id)
         .execute(&self.pool)
         .await
-        .map_err(RepositoryError::from)?;
+        .map_err(DomainError::from)?;
 
         Ok(())
     }
 
-    async fn clear_expired_pending_user(&self) -> Result<(), RepositoryError> {
+    async fn clear_expired_pending_user(&self) -> Result<(), DomainError> {
         sqlx::query(
             r#"
             DELETE FROM pending_users
@@ -87,7 +83,7 @@ impl PendingUserRepository for PendingUserRepositorySqlx {
         )
         .execute(&self.pool)
         .await
-        .map_err(RepositoryError::from)?;
+        .map_err(DomainError::from)?;
 
         Ok(())
     }

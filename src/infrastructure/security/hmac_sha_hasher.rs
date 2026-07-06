@@ -1,9 +1,8 @@
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 
-use crate::domain::{
-    errors::cripto_error::CriptoError, services::refresh_token_hasher::RefreshTokenHasher,
-};
+use crate::application::errors::CryptoError;
+use crate::application::ports::RefreshTokenHasher;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -18,9 +17,9 @@ impl HmacShaHasher {
 }
 
 impl RefreshTokenHasher for HmacShaHasher {
-    fn hash(&self, token: &str) -> Result<String, CriptoError> {
+    fn hash(&self, token: &str) -> Result<String, CryptoError> {
         let mut mac = HmacSha256::new_from_slice(self.secret.as_bytes())
-            .map_err(|_| CriptoError::HashError)?;
+            .map_err(|_| CryptoError::HashError)?;
 
         mac.update(token.as_bytes());
 

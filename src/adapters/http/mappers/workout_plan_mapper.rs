@@ -1,18 +1,20 @@
-use crate::{
-    adapters::http::dtos::workout_plan::{
-        DayOfWeekDTO, RoutineItemTypeDTO, RoutineModeDTO, WorkoutPlanRequestDTO,
-        WorkoutPlanResponseDTO, WorkoutPlanRoutineItemResponseDTO,
-        WorkoutPlanRoutineItemTemplateResponseDTO, WorkoutPlanSummaryResponseDTO,
-        WorkoutPlanUpdateNameRequestDTO,
-    },
-    application::dtos::workout_plan::{WorkoutPlanRequest, WorkoutPlanUpdateRequest},
-    domain::{
-        entities::workout_plan::{WorkoutPlan, WorkoutPlanRoutineItem, WorkoutPlanSummary},
-        enums::{
-            day_of_week::DayOfWeek, routine_item_type::RoutineItemType, routine_mode::RoutineMode,
-        },
-    },
-};
+use crate::adapters::http::dtos::DayOfWeekDTO;
+use crate::adapters::http::dtos::RoutineItemTypeDTO;
+use crate::adapters::http::dtos::RoutineModeDTO;
+use crate::adapters::http::dtos::WorkoutPlanRequestDTO;
+use crate::adapters::http::dtos::WorkoutPlanResponseDTO;
+use crate::adapters::http::dtos::WorkoutPlanRoutineItemResponseDTO;
+use crate::adapters::http::dtos::WorkoutPlanRoutineItemTemplateResponseDTO;
+use crate::adapters::http::dtos::WorkoutPlanSummaryResponseDTO;
+use crate::adapters::http::dtos::WorkoutPlanUpdateNameRequestDTO;
+use crate::application::dtos::WorkoutPlanRequest;
+use crate::application::dtos::WorkoutPlanUpdateRequest;
+use crate::domain::entities::WorkoutPlan;
+use crate::domain::entities::WorkoutPlanRoutineItem;
+use crate::domain::entities::WorkoutPlanSummary;
+use crate::domain::enums::DayOfWeek;
+use crate::domain::enums::RoutineItemType;
+use crate::domain::enums::RoutineMode;
 
 pub fn to_workout_plan_request(wp: WorkoutPlanRequestDTO) -> WorkoutPlanRequest {
     WorkoutPlanRequest {
@@ -30,7 +32,7 @@ pub fn to_workout_plan_update_name_request(
     }
 }
 
-pub fn to_day_of_week(day_of_week: DayOfWeekDTO) -> DayOfWeek {
+fn to_day_of_week(day_of_week: DayOfWeekDTO) -> DayOfWeek {
     match day_of_week {
         DayOfWeekDTO::Monday => DayOfWeek::Monday,
         DayOfWeekDTO::Tuesday => DayOfWeek::Tuesday,
@@ -46,7 +48,7 @@ pub fn to_optional_day_of_week(day_of_week: Option<DayOfWeekDTO>) -> Option<DayO
     day_of_week.map(to_day_of_week)
 }
 
-pub fn to_routine_mode(routine_mode: RoutineModeDTO) -> RoutineMode {
+fn to_routine_mode(routine_mode: RoutineModeDTO) -> RoutineMode {
     match routine_mode {
         RoutineModeDTO::Weekly => RoutineMode::Weekly,
         RoutineModeDTO::Sequential => RoutineMode::Sequential,

@@ -1,10 +1,11 @@
-use crate::domain::errors::{
-    bucket_error::BucketError, cripto_error::CriptoError, exercise_error::ExerciseError,
-    file_error::FileError, jwt_error::JwtError, measurement_error::MeasurementError,
-    permission_error::PermissionError, repository_error::RepositoryError, smtp_error::SmtpError,
-    user_error::UserError, workout_log_error::WorkoutLogError,
-    workout_plan_error::WorkoutPlanError, workout_template_error::WorkoutTemplateError,
-};
+use crate::domain::errors::ExerciseError;
+use crate::domain::errors::MeasurementError;
+use crate::domain::errors::PermissionError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::errors::UserError;
+use crate::domain::errors::WorkoutPlanError;
+use crate::domain::errors::WorkoutSessionError;
+use crate::domain::errors::WorkoutTemplateError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -12,26 +13,11 @@ pub enum DomainError {
     #[error("repository error: {0}")]
     Repository(#[from] RepositoryError),
 
-    #[error("cryptography error: {0}")]
-    Cripto(#[from] CriptoError),
-
     #[error("user error: {0}")]
     User(#[from] UserError),
 
-    #[error("jwt error: {0}")]
-    Jwt(#[from] JwtError),
-
-    #[error("permisson error: {0}")]
-    Permisson(#[from] PermissionError),
-
-    #[error("smtp error: {0}")]
-    Smtp(#[from] SmtpError),
-
-    #[error("bucker error: {0}")]
-    Bucket(#[from] BucketError),
-
-    #[error("file error: {0}")]
-    File(#[from] FileError),
+    #[error("permission error: {0}")]
+    Permission(#[from] PermissionError),
 
     #[error("measurement error: {0}")]
     Measurement(#[from] MeasurementError),
@@ -46,5 +32,5 @@ pub enum DomainError {
     WorkoutTemplate(#[from] WorkoutTemplateError),
 
     #[error("workout session error {0}")]
-    WorkoutLog(#[from] WorkoutLogError),
+    WorkoutSession(#[from] WorkoutSessionError),
 }

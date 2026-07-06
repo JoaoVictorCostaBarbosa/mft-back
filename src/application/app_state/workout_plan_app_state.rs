@@ -1,18 +1,18 @@
-use crate::{
-    application::usecase::workout_plan::{
-        FindCurrentWorkoutPlan, FindNextRoutineItem, RemoveRoutineItem, SetCurrentWorkoutPlan,
-        UpdateRoutineItem, add_workout_template::AddWorkoutTemplateToWorkoutPlan,
-        create_workout_plan::CreateWorkoutPlan, delete_workout_plan::DeleteWorkoutPlan,
-        find_workout_plan_by_id::FindWorkoutPlanById,
-        read_workout_plan_summary::ReadWorkoutPlanSummary,
-        remove_workout_template::RemoveWorkoutTemplateFromWorkoutPlan,
-        soft_delete_workout_plan::SoftDeleteWorkoutPlan, update_workout_plan::UpdateWorkoutPlan,
-    },
-    domain::repositories::{
-        workout_plan_repository::WorkoutPlanRepository,
-        workout_template_repository::WorkoutTemplateRepository,
-    },
-};
+use crate::application::usecase::workout_plan::AddWorkoutTemplateToWorkoutPlan;
+use crate::application::usecase::workout_plan::CreateWorkoutPlan;
+use crate::application::usecase::workout_plan::DeleteWorkoutPlan;
+use crate::application::usecase::workout_plan::FindCurrentWorkoutPlan;
+use crate::application::usecase::workout_plan::FindNextRoutineItem;
+use crate::application::usecase::workout_plan::FindWorkoutPlanById;
+use crate::application::usecase::workout_plan::ReadWorkoutPlanSummary;
+use crate::application::usecase::workout_plan::RemoveRoutineItem;
+use crate::application::usecase::workout_plan::RemoveWorkoutTemplateFromWorkoutPlan;
+use crate::application::usecase::workout_plan::SetCurrentWorkoutPlan;
+use crate::application::usecase::workout_plan::SoftDeleteWorkoutPlan;
+use crate::application::usecase::workout_plan::UpdateRoutineItem;
+use crate::application::usecase::workout_plan::UpdateWorkoutPlan;
+use crate::domain::repositories::WorkoutPlanRepository;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 
 #[derive(Clone)]

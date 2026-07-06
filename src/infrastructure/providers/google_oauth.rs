@@ -1,11 +1,9 @@
-use crate::domain::{
-    errors::{
-        domain_error::DomainError, permission_error::PermissionError,
-        repository_error::RepositoryError,
-    },
-    services::google_oauth::{GoogleOAuthProvider, GoogleUserInfo},
-};
-use axum::async_trait;
+use crate::application::ports::GoogleOAuthProvider;
+use crate::application::ports::GoogleUserInfo;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::PermissionError;
+use crate::domain::errors::RepositoryError;
+use async_trait::async_trait;
 use reqwest::Client;
 use serde::Deserialize;
 

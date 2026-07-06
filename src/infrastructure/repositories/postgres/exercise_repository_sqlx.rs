@@ -1,28 +1,53 @@
-use crate::{
-    domain::{
-        commands::exercise_commands::{
-            ExerciseFilterFields, ExercisePaginationFields, ExerciseUpdateFields,
-        },
-        entities::exercise::Exercise,
-        entities::pagination::Paginated,
-        errors::{domain_error::DomainError, repository_error::RepositoryError},
-        repositories::exercise_repository::ExerciseRepository,
-    },
-    infrastructure::repositories::{
-        enums_db::{
-            equipment_db::EquipmentDb, exercise_type_db::ExerciseTypeDb,
-            muscle_group_db::MuscleGroupDb,
-        },
-        models::exercise_model::ExerciseModel,
-    },
-};
-use axum::async_trait;
-use chrono::Utc;
+use crate::application::ports::ExerciseQueries;
+use crate::application::read_models::ExerciseLastPerformance;
+use crate::application::read_models::ExercisePersonalRecord;
+use crate::application::read_models::ExerciseLastPerformanceSet;
+use crate::domain::commands::ExerciseFilterFields;
+use crate::domain::commands::ExercisePaginationFields;
+use crate::domain::commands::ExerciseUpdateFields;
+use crate::domain::entities::Exercise;
+use crate::domain::entities::Paginated;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::repositories::ExerciseRepository;
+use crate::infrastructure::repositories::enums_db::EquipmentDb;
+use crate::infrastructure::repositories::enums_db::ExerciseTypeDb;
+use crate::infrastructure::repositories::enums_db::MuscleGroupDb;
+use crate::infrastructure::repositories::models::ExerciseModel;
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use sqlx::FromRow;
 use sqlx::{PgPool, QueryBuilder};
 use uuid::Uuid;
 
+#[derive(Debug, FromRow)]
+struct ExerciseLastSessionRow {
+    exercise_id: Uuid,
+    last_session_id: Uuid,
+    performed_at: DateTime<Utc>,
+}
+
+#[derive(Debug, FromRow)]
+struct ExercisePersonalRecordRow {
+    exercise_id: Uuid,
+    exercise_name: String,
+    max_weight: f32,
+    reps: i32,
+    achieved_at: DateTime<Utc>,
+}
+
+#[derive(Debug, FromRow)]
+struct ExerciseLastPerformanceSetRow {
+    exercise_id: Uuid,
+    session_id: Uuid,
+    set_type: crate::infrastructure::repositories::enums_db::SetTypeDb,
+    weight: f32,
+    reps: i32,
+    order: i64,
+}
+
 pub struct ExerciseRepositorySqlx {
-    pub pool: PgPool,
+    pool: PgPool,
 }
 
 impl ExerciseRepositorySqlx {
@@ -91,9 +116,9 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
 
         if let Some(pagination) = fields.pagination {
             qb.push(" LIMIT ");
-            qb.push_bind(pagination.limit());
+            qb.push_bind(pagination.per_page as i64);
             qb.push(" OFFSET ");
-            qb.push_bind(pagination.offset());
+            qb.push_bind(((pagination.page - 1) * pagination.per_page) as i64);
         }
 
         let models: Vec<ExerciseModel> = qb.build_query_as().fetch_all(&self.pool).await?;
@@ -261,6 +286,148 @@ impl ExerciseRepository for ExerciseRepositorySqlx {
     }
 }
 
+#[async_trait]
+impl ExerciseQueries for ExerciseRepositorySqlx {
+    async fn find_last_performances(
+        &self,
+        user_id: Uuid,
+        exercise_ids: Vec<Uuid>,
+    ) -> Result<Vec<ExerciseLastPerformance>, DomainError> {
+        let last_sessions = sqlx::query_as::<_, ExerciseLastSessionRow>(
+            r#"
+            SELECT DISTINCT ON (el.exercise_id)
+                el.exercise_id,
+                wl.id AS last_session_id,
+                wl.finished_at AS performed_at
+            FROM exercise_log el
+            JOIN workout_log wl
+                ON wl.id = el.workout_log_id
+            JOIN exercise e
+                ON e.id = el.exercise_id
+            WHERE wl.user_id = $1
+                AND wl.status = 'finished'
+                AND wl.finished_at IS NOT NULL
+                AND wl.deleted_at IS NULL
+                AND e.deleted_at IS NULL
+                AND (e.user_id IS NULL OR e.user_id = $1)
+                AND el.exercise_id = ANY($2)
+            ORDER BY el.exercise_id, wl.finished_at DESC, wl.started_at DESC
+            "#,
+        )
+        .bind(user_id)
+        .bind(&exercise_ids)
+        .fetch_all(&self.pool)
+        .await?;
+
+        if last_sessions.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let session_ids = last_sessions
+            .iter()
+            .map(|session| session.last_session_id)
+            .collect::<Vec<_>>();
+
+        let set_rows = sqlx::query_as::<_, ExerciseLastPerformanceSetRow>(
+            r#"
+            SELECT
+                el.exercise_id,
+                el.workout_log_id AS session_id,
+                sl.type AS set_type,
+                sl.weight::real AS weight,
+                sl.reps,
+                ROW_NUMBER() OVER (
+                    PARTITION BY el.exercise_id, el.workout_log_id
+                    ORDER BY sl.created_at ASC, sl.id ASC
+                ) AS "order"
+            FROM exercise_log el
+            JOIN set_log sl
+                ON sl.exercise_log_id = el.id
+            WHERE el.workout_log_id = ANY($1)
+                AND el.exercise_id = ANY($2)
+            ORDER BY el.exercise_id, sl.created_at ASC, sl.id ASC
+            "#,
+        )
+        .bind(&session_ids)
+        .bind(&exercise_ids)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut performances = last_sessions
+            .into_iter()
+            .map(|session| ExerciseLastPerformance {
+                exercise_id: session.exercise_id,
+                last_session_id: session.last_session_id,
+                performed_at: session.performed_at,
+                sets: Vec::new(),
+            })
+            .collect::<Vec<_>>();
+
+        for set_row in set_rows {
+            if let Some(performance) = performances.iter_mut().find(|performance| {
+                performance.exercise_id == set_row.exercise_id
+                    && performance.last_session_id == set_row.session_id
+            }) {
+                performance.sets.push(ExerciseLastPerformanceSet {
+                    set_type: set_row.set_type.into(),
+                    weight: set_row.weight,
+                    reps: set_row.reps as u32,
+                    order: set_row.order as u32,
+                });
+            }
+        }
+
+        Ok(performances)
+    }
+
+    async fn find_personal_records(
+        &self,
+        user_id: Uuid,
+    ) -> Result<Vec<ExercisePersonalRecord>, DomainError> {
+        let rows = sqlx::query_as::<_, ExercisePersonalRecordRow>(
+            r#"
+            SELECT
+                exercise_id,
+                exercise_name,
+                max_weight,
+                reps,
+                achieved_at
+            FROM (
+                SELECT DISTINCT ON (el.exercise_id)
+                    el.exercise_id,
+                    e.name AS exercise_name,
+                    sl.weight::real AS max_weight,
+                    sl.reps,
+                    sl.created_at AS achieved_at
+                FROM set_log sl
+                JOIN exercise_log el ON el.id = sl.exercise_log_id
+                JOIN workout_log wl ON wl.id = el.workout_log_id
+                JOIN exercise e ON e.id = el.exercise_id
+                WHERE wl.user_id = $1
+                    AND wl.deleted_at IS NULL
+                    AND e.deleted_at IS NULL
+                ORDER BY el.exercise_id, sl.weight DESC, sl.created_at ASC
+            ) records
+            ORDER BY max_weight DESC, exercise_name ASC
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| ExercisePersonalRecord {
+                exercise_id: row.exercise_id,
+                exercise_name: row.exercise_name,
+                max_weight: row.max_weight,
+                reps: row.reps as u32,
+                achieved_at: row.achieved_at,
+            })
+            .collect())
+    }
+}
+
 fn push_exercise_filters<'args>(
     qb: &mut QueryBuilder<'args, sqlx::Postgres>,
     fields: &ExerciseFilterFields,
@@ -279,6 +446,12 @@ fn push_exercise_filters<'args>(
     if let Some(id) = fields.id {
         qb.push(" AND id = ");
         qb.push_bind(id);
+    }
+
+    if let Some(name) = &fields.name {
+        let escaped = name.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
+        qb.push(" AND name ILIKE ");
+        qb.push_bind(format!("%{escaped}%"));
     }
 
     if let Some(exercise_type) = fields.exercise_type {

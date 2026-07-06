@@ -1,12 +1,10 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_session::AddSetToWorkoutSessionRequestDTO,
-        errors::http_error::HttpError,
-        extractors::current_user::CurrentUser,
-        mappers::workout_session_mapper::{to_set_response, to_set_type},
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::AddSetToWorkoutSessionRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_set_response;
+use crate::adapters::http::mappers::to_set_type;
+use crate::application::app_state::AppState;
+use crate::application::dtos::workout_session::AddSetToSessionInput;
 use axum::{
     Json,
     extract::{Path, State},
@@ -21,7 +19,7 @@ use uuid::Uuid;
     request_body = AddSetToWorkoutSessionRequestDTO,
     params(("session_id" = Uuid, description = "Workout session ID")),
     responses(
-        (status = 201, description = "Set added to workout session", body = crate::adapters::http::dtos::workout_session::WorkoutSessionSetResponseDTO),
+        (status = 201, description = "Set added to workout session", body = crate::adapters::http::dtos::WorkoutSessionSetResponseDTO),
         (status = 403, description = "denied permission"),
         (status = 404, description = "not found"),
         (status = 422, description = "invalid set"),
@@ -41,13 +39,15 @@ pub async fn add_set_to_workout_session_handler(
         .add_set
         .execute(
             current_user,
-            session_id,
-            request.exercise_id,
-            to_set_type(request.set_type),
-            request.weight,
-            request.reps,
-            request.client_operation_id,
-            request.completed_at,
+            AddSetToSessionInput {
+                session_id,
+                exercise_id: request.exercise_id,
+                set_type: to_set_type(request.set_type),
+                weight: request.weight,
+                reps: request.reps,
+                client_operation_id: request.client_operation_id,
+                completed_at: request.completed_at,
+            },
         )
         .await
     {

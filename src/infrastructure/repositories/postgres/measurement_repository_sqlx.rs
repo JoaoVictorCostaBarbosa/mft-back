@@ -1,20 +1,15 @@
-use crate::{
-    domain::{
-        entities::measurement::Measurement,
-        errors::{
-            domain_error::DomainError, measurement_error::MeasurementError,
-            repository_error::RepositoryError,
-        },
-        repositories::measurement_repository::MeasurementRepository,
-    },
-    infrastructure::repositories::models::measurement_model::MeasurementModel,
-};
-use axum::async_trait;
+use crate::domain::entities::Measurement;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::MeasurementError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::repositories::MeasurementRepository;
+use crate::infrastructure::repositories::models::MeasurementModel;
+use async_trait::async_trait;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 pub struct MeasurementRepositorySqlx {
-    pub pool: PgPool,
+    pool: PgPool,
 }
 
 impl MeasurementRepositorySqlx {
@@ -142,6 +137,7 @@ impl MeasurementRepository for MeasurementRepositorySqlx {
                 deleted_at
             FROM measurements
             WHERE user_id = $1
+            ORDER BY created_at DESC
             "#,
         )
         .bind(user_id)

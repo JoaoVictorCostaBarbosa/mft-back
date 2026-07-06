@@ -1,14 +1,13 @@
-use crate::domain::{
-    entities::{
-        user::User,
-        workout_template::{WorkoutTemplate, WorkoutTemplateSummary},
-    },
-    enums::{
-        day_of_week::DayOfWeek, routine_item_type::RoutineItemType, routine_mode::RoutineMode,
-    },
-    errors::{workout_plan_error::WorkoutPlanError, workout_template_error::WorkoutTemplateError},
-    value_objects::name_vo::Name,
-};
+use crate::domain::entities::User;
+use crate::domain::entities::WorkoutTemplate;
+use crate::domain::entities::WorkoutTemplateSummary;
+use crate::domain::enums::DayOfWeek;
+use crate::domain::enums::RoutineItemType;
+use crate::domain::enums::RoutineMode;
+use crate::domain::errors::PermissionError;
+use crate::domain::errors::WorkoutPlanError;
+use crate::domain::errors::WorkoutTemplateError;
+use crate::domain::value_objects::Name;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
@@ -58,9 +57,9 @@ impl WorkoutPlan {
         })
     }
 
-    pub fn assert_owner(&self, user: &User) -> Result<(), WorkoutPlanError> {
+    pub fn assert_owner(&self, user: &User) -> Result<(), PermissionError> {
         if self.user_id != user.id {
-            return Err(WorkoutPlanError::Forbidden);
+            return Err(PermissionError::Forbidden);
         }
 
         Ok(())

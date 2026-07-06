@@ -1,24 +1,24 @@
-use crate::domain::{
-    entities::{user::User, workout_session::CurrentWorkoutSession},
-    errors::domain_error::DomainError,
-    repositories::workout_session_repository::WorkoutSessionRepository,
-};
+use crate::application::errors::AppError;
+use crate::application::ports::WorkoutSessionQueries;
+use crate::application::read_models::CurrentWorkoutSession;
+use crate::domain::entities::User;
 use std::sync::Arc;
 
 pub struct FindCurrentWorkoutSession {
-    workout_session_repo: Arc<dyn WorkoutSessionRepository>,
+    workout_session_queries: Arc<dyn WorkoutSessionQueries>,
 }
 
 impl FindCurrentWorkoutSession {
-    pub fn new(workout_session_repo: Arc<dyn WorkoutSessionRepository>) -> Self {
+    pub fn new(workout_session_queries: Arc<dyn WorkoutSessionQueries>) -> Self {
         Self {
-            workout_session_repo,
+            workout_session_queries,
         }
     }
 
-    pub async fn execute(&self, current_user: User) -> Result<CurrentWorkoutSession, DomainError> {
-        self.workout_session_repo
+    pub async fn execute(&self, current_user: User) -> Result<CurrentWorkoutSession, AppError> {
+        Ok(self
+            .workout_session_queries
             .find_current(current_user.id)
-            .await
+            .await?)
     }
 }

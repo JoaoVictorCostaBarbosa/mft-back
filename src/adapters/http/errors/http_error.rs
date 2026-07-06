@@ -1,9 +1,15 @@
-use crate::domain::errors::{
-    bucket_error::BucketError, cripto_error::CriptoError, domain_error::DomainError,
-    file_error::FileError, jwt_error::JwtError, permission_error::PermissionError,
-    repository_error::RepositoryError, smtp_error::SmtpError, workout_log_error::WorkoutLogError,
-    workout_plan_error::WorkoutPlanError, workout_template_error::WorkoutTemplateError,
-};
+use crate::application::errors::AppError;
+use crate::application::errors::CryptoError;
+use crate::application::errors::FileError;
+use crate::application::errors::JwtError;
+use crate::application::errors::MailError;
+use crate::application::errors::StorageError;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::PermissionError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::errors::WorkoutPlanError;
+use crate::domain::errors::WorkoutSessionError;
+use crate::domain::errors::WorkoutTemplateError;
 use axum::{
     Json,
     http::StatusCode,
@@ -11,11 +17,24 @@ use axum::{
 };
 use serde_json::json;
 
-pub struct HttpError(pub DomainError);
+pub struct HttpError(pub AppError);
+
+const INTERNAL_ERROR_MESSAGE: &str = "internal server error";
+
+// Erros internos nunca expõem o detalhe (mensagem de driver, config, provedor)
+// no corpo da resposta: o detalhe vai para log, o cliente recebe corpo genérico.
+fn internal_error(context: &str, detail: &str) -> (StatusCode, Json<serde_json::Value>) {
+    tracing::error!(context, detail, "internal error");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(json!({ "error": INTERNAL_ERROR_MESSAGE })),
+    )
+}
 
 impl IntoResponse for HttpError {
     fn into_response(self) -> Response {
         match self.0 {
+            AppError::Domain(domain_err) => match domain_err {
             // ========================
             // REPOSITORY ERRORS
             // ========================
@@ -26,21 +45,17 @@ impl IntoResponse for HttpError {
                 RepositoryError::Conflict(msg) => {
                     (StatusCode::CONFLICT, Json(json!({ "error": msg })))
                 }
-                RepositoryError::DbError(msg) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": format!("database error: {}", msg) })),
-                ),
-                RepositoryError::Unexpected(msg) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": msg })),
-                ),
+                RepositoryError::DbError(msg) => internal_error("repository: database error", &msg),
+                RepositoryError::Unexpected(msg) => {
+                    internal_error("repository: unexpected error", &msg)
+                }
             }
             .into_response(),
 
             // ========================
             // PERMISSION ERRORS
             // ========================
-            DomainError::Permisson(perm_err) => match perm_err {
+            DomainError::Permission(perm_err) => match perm_err {
                 PermissionError::Unauthorized => (
                     StatusCode::UNAUTHORIZED,
                     Json(json!({ "error": "invalid credentials" })),
@@ -48,21 +63,6 @@ impl IntoResponse for HttpError {
                 PermissionError::Forbidden => {
                     (StatusCode::FORBIDDEN, Json(json!({ "error": "forbidden" })))
                 }
-            }
-            .into_response(),
-
-            // ========================
-            // CRYPTO ERRORS
-            // ========================
-            DomainError::Cripto(err) => match err {
-                CriptoError::HashError => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": "hash generation failed" })),
-                ),
-                CriptoError::VerifyError => (
-                    StatusCode::UNAUTHORIZED,
-                    Json(json!({ "error": "password verification failed" })),
-                ),
             }
             .into_response(),
 
@@ -111,10 +111,6 @@ impl IntoResponse for HttpError {
                     StatusCode::BAD_REQUEST,
                     Json(json!({ "error": format!("exercise error: {}", e) })),
                 ),
-
-                WorkoutTemplateError::Forbidden => {
-                    (StatusCode::FORBIDDEN, Json(json!({ "error": "forbidden" })))
-                }
 
                 WorkoutTemplateError::NotFound => (
                     StatusCode::NOT_FOUND,
@@ -182,10 +178,6 @@ impl IntoResponse for HttpError {
                     Json(json!({ "error": "sequential routines require position" })),
                 ),
 
-                WorkoutPlanError::Forbidden => {
-                    (StatusCode::FORBIDDEN, Json(json!({ "error": "forbidden" })))
-                }
-
                 WorkoutPlanError::WorkoutTemplate(e) => (
                     StatusCode::BAD_REQUEST,
                     Json(json!({ "error": format!("workout template error: {}", e) })),
@@ -193,53 +185,63 @@ impl IntoResponse for HttpError {
             }
             .into_response(),
 
-            DomainError::WorkoutLog(err) => match err {
-                WorkoutLogError::NotFound => (
+            DomainError::WorkoutSession(err) => match err {
+                WorkoutSessionError::NotFound => (
                     StatusCode::NOT_FOUND,
                     Json(json!({ "error": "workout session not found" })),
                 ),
-                WorkoutLogError::Forbidden => {
-                    (StatusCode::FORBIDDEN, Json(json!({ "error": "forbidden" })))
-                }
-                WorkoutLogError::AlreadyInProgress => (
+                WorkoutSessionError::AlreadyInProgress => (
                     StatusCode::CONFLICT,
                     Json(json!({ "error": "workout session already in progress" })),
                 ),
-                WorkoutLogError::AlreadyFinished => (
+                WorkoutSessionError::AlreadyFinished => (
                     StatusCode::CONFLICT,
                     Json(json!({ "error": "workout session already finished" })),
                 ),
-                WorkoutLogError::AlreadyCancelled => (
+                WorkoutSessionError::AlreadyCancelled => (
                     StatusCode::CONFLICT,
                     Json(json!({ "error": "workout session already cancelled" })),
                 ),
-                WorkoutLogError::NotInProgress => (
+                WorkoutSessionError::NotInProgress => (
                     StatusCode::CONFLICT,
                     Json(json!({ "error": "workout session must be in progress" })),
                 ),
-                WorkoutLogError::InvalidExerciseOrder => (
+                WorkoutSessionError::InvalidExerciseOrder => (
                     StatusCode::UNPROCESSABLE_ENTITY,
                     Json(json!({ "error": "invalid exercise order" })),
                 ),
-                WorkoutLogError::InvalidFinishedAt => (
+                WorkoutSessionError::InvalidFinishedAt => (
                     StatusCode::UNPROCESSABLE_ENTITY,
                     Json(json!({ "error": "finished_at cannot be before started_at" })),
                 ),
-                WorkoutLogError::InvalidReps => (
+                WorkoutSessionError::InvalidReps => (
                     StatusCode::UNPROCESSABLE_ENTITY,
                     Json(json!({ "error": "invalid reps" })),
                 ),
-                WorkoutLogError::InvalidWeight => (
+                WorkoutSessionError::InvalidWeight => (
                     StatusCode::UNPROCESSABLE_ENTITY,
                     Json(json!({ "error": "invalid weight" })),
                 ),
-                WorkoutLogError::ExerciseLog(e) => (
-                    StatusCode::BAD_REQUEST,
-                    Json(json!({ "error": format!("exercise log error: {}", e) })),
-                ),
-                WorkoutLogError::InvalidName(e) => (
+                WorkoutSessionError::InvalidName(e) => (
                     StatusCode::BAD_REQUEST,
                     Json(json!({ "error": format!("invalid name: {}", e) })),
+                ),
+            }
+            .into_response(),
+
+            },
+
+            // ========================
+            // CRYPTO ERRORS
+            // ========================
+            AppError::Crypto(err) => match err {
+                CryptoError::HashError => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({ "error": "hash generation failed" })),
+                ),
+                CryptoError::VerifyError => (
+                    StatusCode::UNAUTHORIZED,
+                    Json(json!({ "error": "password verification failed" })),
                 ),
             }
             .into_response(),
@@ -247,7 +249,7 @@ impl IntoResponse for HttpError {
             // ========================
             // JWT ERRORS
             // ========================
-            DomainError::Jwt(err) => match err {
+            AppError::Jwt(err) => match err {
                 JwtError::ExpiredToken => (
                     StatusCode::UNAUTHORIZED,
                     Json(json!({ "error": "expired token" })),
@@ -268,47 +270,33 @@ impl IntoResponse for HttpError {
                     Json(json!({ "error": "missing claim" })),
                 ),
 
-                JwtError::Internal(msg) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": format!("jwt internal error: {}", msg) })),
-                ),
+                JwtError::Internal(msg) => internal_error("jwt: internal error", &msg),
             }
             .into_response(),
 
             // ========================
-            // SMTP ERRORS
+            // MAIL ERRORS
             // ========================
-            DomainError::Smtp(smtp_err) => match smtp_err {
-                SmtpError::Send(msg) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": format!("smtp send error: {}", msg) })),
-                ),
-                SmtpError::Config(msg) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": format!("smtp config error: {}", msg) })),
-                ),
-                SmtpError::Build(msg) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": format!("email build error: {}", msg) })),
-                ),
+            AppError::Mail(mail_err) => match mail_err {
+                MailError::Send(msg) => internal_error("mail: send error", &msg),
+                MailError::Config(msg) => internal_error("mail: config error", &msg),
+                MailError::Build(msg) => internal_error("mail: build error", &msg),
             }
             .into_response(),
 
             // ========================
-            // BUCKET ERRORS
+            // STORAGE ERRORS
             // ========================
-            DomainError::Bucket(bucket_err) => match bucket_err {
-                BucketError::UploadFailed(msg) | BucketError::DeleteFailed(msg) => (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": msg })),
-                ),
+            AppError::Storage(storage_err) => match storage_err {
+                StorageError::UploadFailed(msg) => internal_error("storage: upload failed", &msg),
+                StorageError::DeleteFailed(msg) => internal_error("storage: delete failed", &msg),
             }
             .into_response(),
 
             // ========================
             // FILE ERRORS
             // ========================
-            DomainError::File(file_err) => match file_err {
+            AppError::File(file_err) => match file_err {
                 FileError::MissingFile => (
                     StatusCode::BAD_REQUEST,
                     Json(json!({ "error": "no file uploaded" })),
@@ -328,5 +316,56 @@ impl IntoResponse for HttpError {
             }
             .into_response(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::to_bytes;
+
+    async fn body_of(error: AppError) -> (StatusCode, String) {
+        let response = HttpError(error).into_response();
+        let status = response.status();
+        let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        (status, String::from_utf8(bytes.to_vec()).unwrap())
+    }
+
+    #[tokio::test]
+    async fn database_error_detail_is_not_exposed() {
+        let detail = "relation \"users\" does not exist";
+        let (status, body) = body_of(RepositoryError::DbError(detail.to_string()).into()).await;
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(!body.contains(detail));
+        assert!(body.contains(INTERNAL_ERROR_MESSAGE));
+    }
+
+    #[tokio::test]
+    async fn smtp_error_detail_is_not_exposed() {
+        let detail = "smtp.example.com:587 connection refused";
+        let (status, body) = body_of(MailError::Config(detail.to_string()).into()).await;
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(!body.contains("smtp.example.com"));
+        assert!(body.contains(INTERNAL_ERROR_MESSAGE));
+    }
+
+    #[tokio::test]
+    async fn jwt_internal_error_detail_is_not_exposed() {
+        let detail = "secret key has invalid length";
+        let (status, body) = body_of(JwtError::Internal(detail.to_string()).into()).await;
+
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        assert!(!body.contains(detail));
+    }
+
+    #[tokio::test]
+    async fn conflict_message_is_kept_for_client() {
+        let (status, body) =
+            body_of(RepositoryError::Conflict("email already used".to_string()).into()).await;
+
+        assert_eq!(status, StatusCode::CONFLICT);
+        assert!(body.contains("email already used"));
     }
 }

@@ -1,10 +1,7 @@
-use crate::{
-    adapters::http::{
-        errors::http_error::HttpError, extractors::current_user::CurrentUser,
-        mappers::workout_plan_mapper::to_routine_item_response,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::adapters::http::mappers::to_routine_item_response;
+use crate::application::app_state::AppState;
 use axum::{
     Json,
     extract::{Path, State},
@@ -19,7 +16,7 @@ use uuid::Uuid;
         ("workout_plan_id" = Uuid, description = "Workout plan ID", example = "b728b759-4d32-4148-936e-d9036c071d72"),
     ),
     responses(
-        (status = 200, description = "Next routine item found", body = crate::adapters::http::dtos::workout_plan::WorkoutPlanRoutineItemResponseDTO),
+        (status = 200, description = "Next routine item found", body = crate::adapters::http::dtos::WorkoutPlanRoutineItemResponseDTO),
         (status = 403, description = "denied permission"),
         (status = 404, description = "not found"),
         (status = 500, description = "internal server error"),

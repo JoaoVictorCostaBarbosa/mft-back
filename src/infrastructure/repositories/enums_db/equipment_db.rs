@@ -1,4 +1,4 @@
-use crate::domain::enums::equipment::Equipment;
+use crate::domain::enums::Equipment;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 #[sqlx(type_name = "equipment_enum", rename_all = "snake_case")]

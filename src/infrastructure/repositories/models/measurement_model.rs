@@ -2,13 +2,11 @@ use chrono::{DateTime, Utc};
 use sqlx::prelude::FromRow;
 use uuid::Uuid;
 
-use crate::domain::{
-    entities::measurement::Measurement,
-    errors::measurement_error::MeasurementError,
-    value_objects::{
-        body_height_vo::BodyHeight, body_part_vo::BodyPartMeasure, body_weight_vo::BodyWeight,
-    },
-};
+use crate::domain::entities::Measurement;
+use crate::domain::errors::MeasurementError;
+use crate::domain::value_objects::BodyHeight;
+use crate::domain::value_objects::BodyPartMeasure;
+use crate::domain::value_objects::BodyWeight;
 
 #[derive(Debug, FromRow)]
 pub struct MeasurementModel {

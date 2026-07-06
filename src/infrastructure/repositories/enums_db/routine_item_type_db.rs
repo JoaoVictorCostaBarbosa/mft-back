@@ -1,4 +1,4 @@
-use crate::domain::enums::routine_item_type::RoutineItemType;
+use crate::domain::enums::RoutineItemType;
 
 #[derive(Debug, Clone, Copy, sqlx::Type)]
 #[sqlx(type_name = "routine_item_type_enum", rename_all = "snake_case")]

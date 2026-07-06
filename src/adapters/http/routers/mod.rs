@@ -1,21 +1,21 @@
-use crate::{
-    adapters::http::routers::{
-        auth_router::auth_routers, exercise_router::exercise_routers,
-        measurement_router::measurement_routers, user_router::user_routers,
-        workout_plan_router::workout_plan_routers, workout_session_router::workout_session_routers,
-        workout_template_router::workout_template_routers,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::application::app_state::AppState;
 use axum::Router;
 
-pub mod auth_router;
-pub mod exercise_router;
-pub mod measurement_router;
-pub mod user_router;
-pub mod workout_plan_router;
-pub mod workout_session_router;
-pub mod workout_template_router;
+mod auth_router;
+mod exercise_router;
+mod measurement_router;
+mod user_router;
+mod workout_plan_router;
+mod workout_session_router;
+mod workout_template_router;
+
+pub use auth_router::auth_routers;
+pub use exercise_router::exercise_routers;
+pub use measurement_router::measurement_routers;
+pub use user_router::user_routers;
+pub use workout_plan_router::workout_plan_routers;
+pub use workout_session_router::workout_session_routers;
+pub use workout_template_router::workout_template_routers;
 
 pub fn build_http() -> Router<AppState> {
     Router::new().nest(

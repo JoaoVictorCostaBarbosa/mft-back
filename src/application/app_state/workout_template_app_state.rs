@@ -1,19 +1,13 @@
-use crate::{
-    application::usecase::workout_template::{
-        add_exercice_to_workout_template::AddExerciseToWorkoutTemplate,
-        create_workout_template::CreateWorkoutTemplate,
-        delete_workout_template::DeleteWorkoutTemplate,
-        find_workout_template_by_id::FindWorkoutTemplateById,
-        read_workouts_template::ReadWorkoutsTemplate,
-        remove_exercise_from_workout_template::RemoveExerciseFromWorkoutTemplate,
-        soft_delete_workout_template::SoftDeleteWorkoutTemplate,
-        update_workout_template::UpdateWorkoutTemplate,
-    },
-    domain::repositories::{
-        exercise_repository::ExerciseRepository,
-        workout_template_repository::WorkoutTemplateRepository,
-    },
-};
+use crate::application::usecase::workout_template::AddExerciseToWorkoutTemplate;
+use crate::application::usecase::workout_template::CreateWorkoutTemplate;
+use crate::application::usecase::workout_template::DeleteWorkoutTemplate;
+use crate::application::usecase::workout_template::FindWorkoutTemplateById;
+use crate::application::usecase::workout_template::ReadWorkoutsTemplate;
+use crate::application::usecase::workout_template::RemoveExerciseFromWorkoutTemplate;
+use crate::application::usecase::workout_template::SoftDeleteWorkoutTemplate;
+use crate::application::usecase::workout_template::UpdateWorkoutTemplate;
+use crate::domain::repositories::ExerciseRepository;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 
 #[derive(Clone)]

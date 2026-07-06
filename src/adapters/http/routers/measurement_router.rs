@@ -1,13 +1,9 @@
-use crate::{
-    adapters::http::handlers::measurement::{
-        create_measurement::create_measurement_handler,
-        delete_measurement::delete_measurement_handler,
-        find_measurement_by_id::find_measurement_by_id_handler,
-        find_measurements::find_measurements_handler,
-        soft_delete_measurement::soft_delete_measurement_handler,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::handlers::measurement::create_measurement_handler;
+use crate::adapters::http::handlers::measurement::delete_measurement_handler;
+use crate::adapters::http::handlers::measurement::find_measurement_by_id_handler;
+use crate::adapters::http::handlers::measurement::find_measurements_handler;
+use crate::adapters::http::handlers::measurement::soft_delete_measurement_handler;
+use crate::application::app_state::AppState;
 use axum::{
     Router,
     routing::{delete, get, patch, post},

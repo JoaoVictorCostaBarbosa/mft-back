@@ -1,21 +1,18 @@
-use crate::{
-    adapters::http::handlers::workout_plan::{
-        add_routine_item_to_wp::add_routine_item_to_workout_plan_handler,
-        add_workout_template_to_wp::add_workout_template_to_workout_plan_handler,
-        create_wp::create_workout_plan_handler, delete_wp::delete_workout_plan_handler,
-        find_current_wp_user::find_user_current_workout_plan,
-        find_next_routine_item::find_next_routine_item_handler,
-        find_wp_by_id::find_workout_plan_by_id_handler,
-        read_user_wp_summary::read_user_workout_plans_summary_handler,
-        remove_routine_item::remove_routine_item_handler,
-        remove_workout_template_from_wp::remove_workout_template_from_workout_plan_handler,
-        set_current_workout_plan::set_current_workout_plan,
-        soft_delete_wp::soft_delete_workout_plan_handler,
-        update_routine_item::update_routine_item_handler,
-        update_wp_name::update_workout_plan_name_handler,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::handlers::workout_plan::add_routine_item_to_workout_plan_handler;
+use crate::adapters::http::handlers::workout_plan::add_workout_template_to_workout_plan_handler;
+use crate::adapters::http::handlers::workout_plan::create_workout_plan_handler;
+use crate::adapters::http::handlers::workout_plan::delete_workout_plan_handler;
+use crate::adapters::http::handlers::workout_plan::find_next_routine_item_handler;
+use crate::adapters::http::handlers::workout_plan::find_user_current_workout_plan;
+use crate::adapters::http::handlers::workout_plan::find_workout_plan_by_id_handler;
+use crate::adapters::http::handlers::workout_plan::read_user_workout_plans_summary_handler;
+use crate::adapters::http::handlers::workout_plan::remove_routine_item_handler;
+use crate::adapters::http::handlers::workout_plan::remove_workout_template_from_workout_plan_handler;
+use crate::adapters::http::handlers::workout_plan::set_current_workout_plan;
+use crate::adapters::http::handlers::workout_plan::soft_delete_workout_plan_handler;
+use crate::adapters::http::handlers::workout_plan::update_routine_item_handler;
+use crate::adapters::http::handlers::workout_plan::update_workout_plan_name_handler;
+use crate::application::app_state::AppState;
 use axum::{
     Router,
     routing::{delete, get, patch, post, put},

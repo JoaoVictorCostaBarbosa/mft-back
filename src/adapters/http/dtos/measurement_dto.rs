@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -23,6 +24,7 @@ pub struct CreateMeasurementDTO {
 #[derive(Debug, ToSchema, Serialize)]
 pub struct MeasurementResponse {
     pub id: Uuid,
+    pub created_at: DateTime<Utc>,
     pub weight: Option<f32>,
     pub height: Option<f32>,
     pub left_calf: Option<f32>,

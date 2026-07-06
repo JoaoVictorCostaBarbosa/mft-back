@@ -1,20 +1,27 @@
+mod add_workout_template;
+mod create_workout_plan;
+mod delete_workout_plan;
 mod find_current_workout_plan;
 mod find_next_routine_item;
+mod find_workout_plan_by_id;
+mod read_workout_plan_summary;
 mod remove_routine_item;
+mod remove_workout_template;
 mod set_current_workout_plan;
+mod soft_delete_workout_plan;
 mod update_routine_item;
+mod update_workout_plan;
 
-pub mod add_workout_template;
-pub mod create_workout_plan;
-pub mod delete_workout_plan;
-pub mod find_workout_plan_by_id;
-pub mod read_workout_plan_summary;
-pub mod remove_workout_template;
-pub mod soft_delete_workout_plan;
-pub mod update_workout_plan;
-
+pub use add_workout_template::AddWorkoutTemplateToWorkoutPlan;
+pub use create_workout_plan::CreateWorkoutPlan;
+pub use delete_workout_plan::DeleteWorkoutPlan;
 pub use find_current_workout_plan::FindCurrentWorkoutPlan;
 pub use find_next_routine_item::FindNextRoutineItem;
+pub use find_workout_plan_by_id::FindWorkoutPlanById;
+pub use read_workout_plan_summary::ReadWorkoutPlanSummary;
 pub use remove_routine_item::RemoveRoutineItem;
+pub use remove_workout_template::RemoveWorkoutTemplateFromWorkoutPlan;
 pub use set_current_workout_plan::SetCurrentWorkoutPlan;
+pub use soft_delete_workout_plan::SoftDeleteWorkoutPlan;
 pub use update_routine_item::UpdateRoutineItem;
+pub use update_workout_plan::UpdateWorkoutPlan;

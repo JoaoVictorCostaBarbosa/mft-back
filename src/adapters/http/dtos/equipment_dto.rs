@@ -1,4 +1,4 @@
-use crate::domain::enums::equipment::Equipment;
+use crate::domain::enums::Equipment;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

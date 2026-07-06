@@ -1,10 +1,7 @@
-use crate::{
-    adapters::http::{
-        dtos::workout_session::ReorderWorkoutSessionExercisesRequestDTO,
-        errors::http_error::HttpError, extractors::current_user::CurrentUser,
-    },
-    application::app_state::app_state::AppState,
-};
+use crate::adapters::http::dtos::ReorderWorkoutSessionExercisesRequestDTO;
+use crate::adapters::http::errors::HttpError;
+use crate::adapters::http::extractors::CurrentUser;
+use crate::application::app_state::AppState;
 use axum::{
     Json,
     extract::{Path, State},

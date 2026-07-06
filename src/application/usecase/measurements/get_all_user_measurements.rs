@@ -1,13 +1,12 @@
+use crate::application::errors::AppError;
 use std::sync::Arc;
 
-use crate::domain::{
-    entities::{measurement::Measurement, user::User},
-    errors::domain_error::DomainError,
-    repositories::measurement_repository::MeasurementRepository,
-};
+use crate::domain::entities::Measurement;
+use crate::domain::entities::User;
+use crate::domain::repositories::MeasurementRepository;
 
 pub struct GetAllUserMeasurements {
-    pub measurement_repo: Arc<dyn MeasurementRepository>,
+    measurement_repo: Arc<dyn MeasurementRepository>,
 }
 
 impl GetAllUserMeasurements {
@@ -15,7 +14,7 @@ impl GetAllUserMeasurements {
         Self { measurement_repo }
     }
 
-    pub async fn exexcute(&self, current_user: User) -> Result<Vec<Measurement>, DomainError> {
+    pub async fn exexcute(&self, current_user: User) -> Result<Vec<Measurement>, AppError> {
         let result = self
             .measurement_repo
             .get_measurements_by_user_id(current_user.id)

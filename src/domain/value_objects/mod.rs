@@ -1,8 +1,13 @@
-pub mod body_height_vo;
-pub mod body_part_vo;
-pub mod body_weight_vo;
-pub mod email_vo;
-pub mod exercise_log_vo;
-pub mod name_vo;
-pub mod password_vo;
-pub mod weight_vo;
+mod body_height_vo;
+mod body_part_vo;
+mod body_weight_vo;
+mod email_vo;
+mod name_vo;
+mod password_vo;
+
+pub use body_height_vo::{BodyHeight, BodyHeightError};
+pub use body_part_vo::{BodyPartMeasure, BodyPartMeasureError};
+pub use body_weight_vo::{BodyWeight, BodyWeightError};
+pub use email_vo::{Email, EmailError};
+pub use name_vo::{Name, NameError};
+pub use password_vo::{Password, PasswordError};

@@ -1,5 +1,5 @@
-use crate::domain::errors::cripto_error::CriptoError;
-use crate::domain::services::cripto::CriptoService;
+use crate::application::errors::CryptoError;
+use crate::application::ports::CryptoService;
 use argon2::{
     Argon2,
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -8,20 +8,20 @@ use rand::rngs::OsRng;
 
 pub struct Argon2Hasher;
 
-impl CriptoService for Argon2Hasher {
-    fn hash(&self, password: &str) -> Result<String, CriptoError> {
+impl CryptoService for Argon2Hasher {
+    fn hash(&self, password: &str) -> Result<String, CryptoError> {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
         let hash = argon2
             .hash_password(password.as_bytes(), &salt)
-            .map_err(|_| CriptoError::HashError)?
+            .map_err(|_| CryptoError::HashError)?
             .to_string();
 
         Ok(hash)
     }
 
-    fn verify(&self, password: &str, password_hash: &str) -> Result<bool, CriptoError> {
-        let parsed = PasswordHash::new(password_hash).map_err(|_| CriptoError::VerifyError)?;
+    fn verify(&self, password: &str, password_hash: &str) -> Result<bool, CryptoError> {
+        let parsed = PasswordHash::new(password_hash).map_err(|_| CryptoError::VerifyError)?;
 
         let argon = Argon2::default();
 

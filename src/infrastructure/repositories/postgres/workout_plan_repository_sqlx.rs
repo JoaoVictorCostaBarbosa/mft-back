@@ -1,19 +1,18 @@
-use crate::{
-    domain::{
-        commands::workout_plan_command::WorkoutPlanFilterFields,
-        entities::workout_plan::{WorkoutPlan, WorkoutPlanRoutineItem, WorkoutPlanSummary},
-        errors::{domain_error::DomainError, repository_error::RepositoryError},
-        repositories::workout_plan_repository::WorkoutPlanRepository,
-    },
-    infrastructure::repositories::{
-        enums_db::{day_of_week_db::DayOfWeekDb, routine_item_type_db::RoutineItemTypeDb},
-        models::workout_plan_model::{WorkoutPlanRoutineItemRowModel, WorkoutPlanRowModel},
-        repo_mapper::wp_repo_mapper::{
-            to_workout_plan_entity, to_workout_plan_row_model, to_workout_plan_summary,
-        },
-    },
-};
-use axum::async_trait;
+use crate::domain::commands::WorkoutPlanFilterFields;
+use crate::domain::entities::WorkoutPlan;
+use crate::domain::entities::WorkoutPlanRoutineItem;
+use crate::domain::entities::WorkoutPlanSummary;
+use crate::domain::errors::DomainError;
+use crate::domain::errors::RepositoryError;
+use crate::domain::repositories::WorkoutPlanRepository;
+use crate::infrastructure::repositories::enums_db::DayOfWeekDb;
+use crate::infrastructure::repositories::enums_db::RoutineItemTypeDb;
+use crate::infrastructure::repositories::models::WorkoutPlanRoutineItemRowModel;
+use crate::infrastructure::repositories::models::WorkoutPlanRowModel;
+use crate::infrastructure::repositories::repo_mapper::to_workout_plan_entity;
+use crate::infrastructure::repositories::repo_mapper::to_workout_plan_row_model;
+use crate::infrastructure::repositories::repo_mapper::to_workout_plan_summary;
+use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{PgPool, QueryBuilder};
 use uuid::Uuid;

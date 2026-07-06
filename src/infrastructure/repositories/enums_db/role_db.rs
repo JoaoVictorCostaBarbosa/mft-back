@@ -1,4 +1,4 @@
-use crate::domain::enums::role::Role;
+use crate::domain::enums::Role;
 
 #[derive(Debug, Clone, sqlx::Type)]
 #[sqlx(type_name = "role_enum", rename_all = "lowercase")]

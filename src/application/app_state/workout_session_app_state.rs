@@ -1,17 +1,19 @@
-use crate::{
-    application::usecase::workout_session::{
-        AddExerciseToWorkoutSession, AddSetToWorkoutSession, CancelWorkoutSession,
-        DeleteWorkoutSessionSet, FindCurrentWorkoutSession, FinishWorkoutSession,
-        ReadWorkoutSessionHistory, ReadWorkoutSessionWeeklySummary,
-        RemoveExerciseFromWorkoutSession, ReorderWorkoutSessionExercises, StartWorkoutSession,
-        UpdateWorkoutSessionSet,
-    },
-    domain::repositories::{
-        workout_plan_repository::WorkoutPlanRepository,
-        workout_session_repository::WorkoutSessionRepository,
-        workout_template_repository::WorkoutTemplateRepository,
-    },
-};
+use crate::application::ports::WorkoutSessionQueries;
+use crate::application::usecase::workout_session::AddExerciseToWorkoutSession;
+use crate::application::usecase::workout_session::AddSetToWorkoutSession;
+use crate::application::usecase::workout_session::CancelWorkoutSession;
+use crate::application::usecase::workout_session::DeleteWorkoutSessionSet;
+use crate::application::usecase::workout_session::FindCurrentWorkoutSession;
+use crate::application::usecase::workout_session::FinishWorkoutSession;
+use crate::application::usecase::workout_session::ReadWorkoutSessionHistory;
+use crate::application::usecase::workout_session::ReadWorkoutSessionWeeklySummary;
+use crate::application::usecase::workout_session::RemoveExerciseFromWorkoutSession;
+use crate::application::usecase::workout_session::ReorderWorkoutSessionExercises;
+use crate::application::usecase::workout_session::StartWorkoutSession;
+use crate::application::usecase::workout_session::UpdateWorkoutSessionSet;
+use crate::domain::repositories::WorkoutPlanRepository;
+use crate::domain::repositories::WorkoutSessionRepository;
+use crate::domain::repositories::WorkoutTemplateRepository;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -33,6 +35,7 @@ pub struct WorkoutSessionAppState {
 impl WorkoutSessionAppState {
     pub fn new(
         workout_session_repo: Arc<dyn WorkoutSessionRepository>,
+        workout_session_queries: Arc<dyn WorkoutSessionQueries>,
         workout_plan_repo: Arc<dyn WorkoutPlanRepository>,
         workout_template_repo: Arc<dyn WorkoutTemplateRepository>,
     ) -> Self {
@@ -42,7 +45,9 @@ impl WorkoutSessionAppState {
                 workout_plan_repo,
                 workout_template_repo,
             )),
-            find_current: Arc::new(FindCurrentWorkoutSession::new(workout_session_repo.clone())),
+            find_current: Arc::new(FindCurrentWorkoutSession::new(
+                workout_session_queries.clone(),
+            )),
             finish: Arc::new(FinishWorkoutSession::new(workout_session_repo.clone())),
             cancel: Arc::new(CancelWorkoutSession::new(workout_session_repo.clone())),
             add_exercise: Arc::new(AddExerciseToWorkoutSession::new(
@@ -57,8 +62,12 @@ impl WorkoutSessionAppState {
             add_set: Arc::new(AddSetToWorkoutSession::new(workout_session_repo.clone())),
             update_set: Arc::new(UpdateWorkoutSessionSet::new(workout_session_repo.clone())),
             delete_set: Arc::new(DeleteWorkoutSessionSet::new(workout_session_repo.clone())),
-            history: Arc::new(ReadWorkoutSessionHistory::new(workout_session_repo.clone())),
-            weekly_summary: Arc::new(ReadWorkoutSessionWeeklySummary::new(workout_session_repo)),
+            history: Arc::new(ReadWorkoutSessionHistory::new(
+                workout_session_queries.clone(),
+            )),
+            weekly_summary: Arc::new(ReadWorkoutSessionWeeklySummary::new(
+                workout_session_queries,
+            )),
         }
     }
 }

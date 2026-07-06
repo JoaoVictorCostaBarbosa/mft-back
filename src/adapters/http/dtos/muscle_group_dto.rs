@@ -1,4 +1,4 @@
-use crate::domain::enums::muscle_group::MuscleGroup;
+use crate::domain::enums::MuscleGroup;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

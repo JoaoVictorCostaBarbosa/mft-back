@@ -1,4 +1,4 @@
-use crate::domain::value_objects::name_vo::NameError;
+use crate::domain::value_objects::NameError;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
