@@ -47,6 +47,14 @@ fn profile_image_path(user_id: Uuid) -> String {
     format!("users/{user_id}/profile")
 }
 
+fn image_content_type(bytes: &[u8]) -> &'static str {
+    if bytes.starts_with(&[0x89, b'P', b'N', b'G']) {
+        "image/png"
+    } else {
+        "image/jpeg"
+    }
+}
+
 #[async_trait]
 impl FileStorage for R2Storage {
     async fn upload_profile_image(
@@ -55,16 +63,21 @@ impl FileStorage for R2Storage {
         bytes: Vec<u8>,
     ) -> Result<String, StorageError> {
         let path = profile_image_path(user_id);
+        let content_type = image_content_type(&bytes);
         self.client
             .put_object()
             .bucket(&self.bucket_name)
             .key(&path)
+            .content_type(content_type)
             .body(bytes.into())
             .send()
             .await
             .map_err(|err| StorageError::UploadFailed(err.to_string()))?;
 
-        Ok(format!("{}/{}", self.public_base_url, path))
+        // A chave no bucket é fixa por usuário; o ?v= muda a URL a cada troca
+        // para o navegador/CDN não servirem a foto anterior do cache.
+        let version = chrono::Utc::now().timestamp();
+        Ok(format!("{}/{}?v={}", self.public_base_url, path, version))
     }
 
     async fn delete_profile_image(&self, user_id: Uuid) -> Result<(), StorageError> {
