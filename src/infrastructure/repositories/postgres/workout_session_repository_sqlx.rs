@@ -518,12 +518,12 @@ impl WorkoutSessionQueries for WorkoutSessionRepositorySqlx {
                 wl.started_at,
                 wl.status
             FROM workout_log wl
-            JOIN workout_template wt
+            LEFT JOIN workout_template wt
                 ON wt.id = wl.workout_template_id
+                AND wt.deleted_at IS NULL
             WHERE wl.user_id = $1
                 AND wl.status = 'in_progress'
                 AND wl.deleted_at IS NULL
-                AND wt.deleted_at IS NULL
             ORDER BY wl.started_at DESC
             LIMIT 1
             "#,
@@ -628,7 +628,7 @@ impl WorkoutSessionQueries for WorkoutSessionRepositorySqlx {
                 agg.total_sets,
                 agg.total_volume_kg
             FROM workout_log wl
-            JOIN workout_template wt
+            LEFT JOIN workout_template wt
                 ON wt.id = wl.workout_template_id
             LEFT JOIN LATERAL (
                 SELECT

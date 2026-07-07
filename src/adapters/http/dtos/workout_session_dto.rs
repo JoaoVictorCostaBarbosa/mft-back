@@ -5,8 +5,11 @@ use uuid::Uuid;
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct StartWorkoutSessionRequestDTO {
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
+    /// Nulos/ausentes iniciam um treino avulso, sem plano nem template.
+    #[serde(default)]
+    pub workout_plan_id: Option<Uuid>,
+    #[serde(default)]
+    pub workout_template_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -69,8 +72,8 @@ pub enum SetTypeDTO {
 pub struct WorkoutSessionResponseDTO {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
+    pub workout_plan_id: Option<Uuid>,
+    pub workout_template_id: Option<Uuid>,
     pub started_at: DateTime<Utc>,
     pub finished_at: Option<DateTime<Utc>>,
     pub status: WorkoutSessionStatusDTO,
@@ -79,8 +82,8 @@ pub struct WorkoutSessionResponseDTO {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct CurrentWorkoutSessionResponseDTO {
     pub id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template: CurrentWorkoutSessionTemplateDTO,
+    pub workout_plan_id: Option<Uuid>,
+    pub workout_template: Option<CurrentWorkoutSessionTemplateDTO>,
     pub started_at: DateTime<Utc>,
     pub status: WorkoutSessionStatusDTO,
     pub exercises: Vec<CurrentWorkoutSessionExerciseDTO>,
@@ -141,8 +144,8 @@ pub struct WorkoutSessionSetResponseDTO {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct WorkoutSessionHistoryItemDTO {
     pub id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template: CurrentWorkoutSessionTemplateDTO,
+    pub workout_plan_id: Option<Uuid>,
+    pub workout_template: Option<CurrentWorkoutSessionTemplateDTO>,
     pub started_at: DateTime<Utc>,
     pub finished_at: Option<DateTime<Utc>>,
     pub status: WorkoutSessionStatusDTO,

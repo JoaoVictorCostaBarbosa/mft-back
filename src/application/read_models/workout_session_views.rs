@@ -10,9 +10,9 @@ use uuid::Uuid;
 /// resposta, sem invariantes — por isso vivem na application, não no domínio.
 pub struct CurrentWorkoutSession {
     pub id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
-    pub workout_template_name: String,
+    pub workout_plan_id: Option<Uuid>,
+    pub workout_template_id: Option<Uuid>,
+    pub workout_template_name: Option<String>,
     pub started_at: DateTime<Utc>,
     pub status: WorkoutSessionStatus,
     pub exercises: Vec<WorkoutSessionDetailedExercise>,
@@ -36,9 +36,9 @@ pub struct WorkoutSessionExerciseDetails {
 
 pub struct WorkoutSessionHistoryItem {
     pub id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
-    pub workout_template_name: String,
+    pub workout_plan_id: Option<Uuid>,
+    pub workout_template_id: Option<Uuid>,
+    pub workout_template_name: Option<String>,
     pub started_at: DateTime<Utc>,
     pub finished_at: Option<DateTime<Utc>>,
     pub status: WorkoutSessionStatus,

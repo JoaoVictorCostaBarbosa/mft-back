@@ -12,8 +12,8 @@ use crate::infrastructure::repositories::enums_db::WorkoutSessionStatusDb;
 pub struct WorkoutSessionRowModel {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
+    pub workout_plan_id: Option<Uuid>,
+    pub workout_template_id: Option<Uuid>,
     pub started_at: DateTime<Utc>,
     pub finished_at: Option<DateTime<Utc>>,
     pub status: WorkoutSessionStatusDb,
@@ -22,9 +22,9 @@ pub struct WorkoutSessionRowModel {
 #[derive(Debug, FromRow)]
 pub struct CurrentWorkoutSessionRowModel {
     pub id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
-    pub workout_template_name: String,
+    pub workout_plan_id: Option<Uuid>,
+    pub workout_template_id: Option<Uuid>,
+    pub workout_template_name: Option<String>,
     pub started_at: DateTime<Utc>,
     pub status: WorkoutSessionStatusDb,
 }
@@ -32,9 +32,9 @@ pub struct CurrentWorkoutSessionRowModel {
 #[derive(Debug, FromRow)]
 pub struct WorkoutSessionHistoryRowModel {
     pub id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
-    pub workout_template_name: String,
+    pub workout_plan_id: Option<Uuid>,
+    pub workout_template_id: Option<Uuid>,
+    pub workout_template_name: Option<String>,
     pub started_at: DateTime<Utc>,
     pub finished_at: Option<DateTime<Utc>>,
     pub status: WorkoutSessionStatusDb,

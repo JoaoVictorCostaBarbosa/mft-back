@@ -8,8 +8,9 @@ use uuid::Uuid;
 pub struct WorkoutSession {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub workout_plan_id: Uuid,
-    pub workout_template_id: Uuid,
+    /// Nulos em treinos avulsos, iniciados sem plano/template.
+    pub workout_plan_id: Option<Uuid>,
+    pub workout_template_id: Option<Uuid>,
     pub started_at: DateTime<Utc>,
     pub finished_at: Option<DateTime<Utc>>,
     pub status: WorkoutSessionStatus,
@@ -42,7 +43,11 @@ pub struct WorkoutSessionSet {
 }
 
 impl WorkoutSession {
-    pub fn start(user_id: Uuid, workout_plan_id: Uuid, workout_template_id: Uuid) -> Self {
+    pub fn start(
+        user_id: Uuid,
+        workout_plan_id: Option<Uuid>,
+        workout_template_id: Option<Uuid>,
+    ) -> Self {
         Self {
             id: Uuid::new_v4(),
             user_id,
@@ -89,7 +94,16 @@ mod tests {
     use chrono::Duration;
 
     fn session() -> WorkoutSession {
-        WorkoutSession::start(Uuid::new_v4(), Uuid::new_v4(), Uuid::new_v4())
+        WorkoutSession::start(Uuid::new_v4(), Some(Uuid::new_v4()), Some(Uuid::new_v4()))
+    }
+
+    #[test]
+    fn start_without_plan_creates_free_session() {
+        let session = WorkoutSession::start(Uuid::new_v4(), None, None);
+
+        assert_eq!(session.status, WorkoutSessionStatus::InProgress);
+        assert!(session.workout_plan_id.is_none());
+        assert!(session.workout_template_id.is_none());
     }
 
     #[test]

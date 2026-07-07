@@ -50,10 +50,10 @@ pub fn to_current_response(session: CurrentWorkoutSession) -> CurrentWorkoutSess
     CurrentWorkoutSessionResponseDTO {
         id: session.id,
         workout_plan_id: session.workout_plan_id,
-        workout_template: CurrentWorkoutSessionTemplateDTO {
-            id: session.workout_template_id,
-            name: session.workout_template_name,
-        },
+        workout_template: session
+            .workout_template_id
+            .zip(session.workout_template_name)
+            .map(|(id, name)| CurrentWorkoutSessionTemplateDTO { id, name }),
         started_at: session.started_at,
         status: to_status_response(session.status),
         exercises: session
@@ -120,10 +120,10 @@ pub fn to_history_response(
             .map(|item| WorkoutSessionHistoryItemDTO {
                 id: item.id,
                 workout_plan_id: item.workout_plan_id,
-                workout_template: CurrentWorkoutSessionTemplateDTO {
-                    id: item.workout_template_id,
-                    name: item.workout_template_name,
-                },
+                workout_template: item
+                    .workout_template_id
+                    .zip(item.workout_template_name)
+                    .map(|(id, name)| CurrentWorkoutSessionTemplateDTO { id, name }),
                 started_at: item.started_at,
                 finished_at: item.finished_at,
                 status: to_status_response(item.status),
