@@ -9,9 +9,11 @@ use crate::adapters::http::handlers::user::update_email_handler;
 use crate::adapters::http::handlers::user::update_goal_handler;
 use crate::adapters::http::handlers::user::update_password_handler;
 use crate::adapters::http::handlers::user::update_user_handler;
+use crate::adapters::http::extractors::MAX_IMAGE_SIZE_BYTES;
 use crate::application::app_state::AppState;
 use axum::{
     Router,
+    extract::DefaultBodyLimit,
     routing::{delete, get, patch, post},
 };
 
@@ -23,7 +25,11 @@ pub fn user_routers() -> Router<AppState> {
         .route("/users", patch(update_user_handler))
         .route("/users/me/email", patch(update_email_handler))
         .route("/users/me/password", patch(update_password_handler))
-        .route("/users/me/avatar", patch(update_avatar_handler))
+        .route(
+            "/users/me/avatar",
+            // Folga sobre o limite do arquivo para o overhead do multipart.
+            patch(update_avatar_handler).layer(DefaultBodyLimit::max(MAX_IMAGE_SIZE_BYTES + 1024 * 1024)),
+        )
         .route("/users/me/goal", patch(update_goal_handler))
         .route(
             "/users/:user_id/soft-delete",
