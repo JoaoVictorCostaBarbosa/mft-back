@@ -30,8 +30,8 @@ impl StartWorkoutSession {
     pub async fn execute(
         &self,
         current_user: User,
-        workout_plan_id: Uuid,
-        workout_template_id: Uuid,
+        workout_plan_id: Option<Uuid>,
+        workout_template_id: Option<Uuid>,
     ) -> Result<WorkoutSession, AppError> {
         if self
             .workout_session_repo
@@ -41,14 +41,18 @@ impl StartWorkoutSession {
             return Err(WorkoutSessionError::AlreadyInProgress.into());
         }
 
-        let workout_plan = self.workout_plan_repo.find_by_id(workout_plan_id).await?;
-        workout_plan.assert_owner(&current_user)?;
+        if let Some(workout_plan_id) = workout_plan_id {
+            let workout_plan = self.workout_plan_repo.find_by_id(workout_plan_id).await?;
+            workout_plan.assert_owner(&current_user)?;
+        }
 
-        let workout_template = self
-            .workout_template_repo
-            .find_by_id(workout_template_id)
-            .await?;
-        workout_template.assert_owner(&current_user)?;
+        if let Some(workout_template_id) = workout_template_id {
+            let workout_template = self
+                .workout_template_repo
+                .find_by_id(workout_template_id)
+                .await?;
+            workout_template.assert_owner(&current_user)?;
+        }
 
         let session = WorkoutSession::start(current_user.id, workout_plan_id, workout_template_id);
         self.workout_session_repo.start(&session).await?;
@@ -83,9 +87,33 @@ mod tests {
             }),
         );
 
-        let session = use_case.execute(user, plan_id, template_id).await.unwrap();
+        let session = use_case
+            .execute(user, Some(plan_id), Some(template_id))
+            .await
+            .unwrap();
 
         assert_eq!(session.status, WorkoutSessionStatus::InProgress);
+        assert_eq!(session_repo.sessions.lock().unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn starts_free_session_without_plan_and_template() {
+        let user = fixtures::user();
+        let session_repo = Arc::new(InMemoryWorkoutSessionRepository::default());
+        let use_case = StartWorkoutSession::new(
+            session_repo.clone(),
+            Arc::new(FakeWorkoutPlanRepository::new(Uuid::new_v4(), user.id)),
+            Arc::new(FakeWorkoutTemplateRepository {
+                template_id: Uuid::new_v4(),
+                owner_id: user.id,
+            }),
+        );
+
+        let session = use_case.execute(user, None, None).await.unwrap();
+
+        assert_eq!(session.status, WorkoutSessionStatus::InProgress);
+        assert!(session.workout_plan_id.is_none());
+        assert!(session.workout_template_id.is_none());
         assert_eq!(session_repo.sessions.lock().unwrap().len(), 1);
     }
 
@@ -108,7 +136,7 @@ mod tests {
         );
 
         let err = use_case
-            .execute(user, plan_id, template_id)
+            .execute(user, Some(plan_id), Some(template_id))
             .await
             .unwrap_err();
 
@@ -137,7 +165,7 @@ mod tests {
         );
 
         let err = use_case
-            .execute(user, plan_id, template_id)
+            .execute(user, Some(plan_id), Some(template_id))
             .await
             .unwrap_err();
 

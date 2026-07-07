@@ -43,7 +43,7 @@ pub fn clone_user(user: &User) -> User {
 }
 
 pub fn in_progress_session(user_id: Uuid) -> WorkoutSession {
-    WorkoutSession::start(user_id, Uuid::new_v4(), Uuid::new_v4())
+    WorkoutSession::start(user_id, Some(Uuid::new_v4()), Some(Uuid::new_v4()))
 }
 
 pub fn clone_session(session: &WorkoutSession) -> WorkoutSession {

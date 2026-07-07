@@ -8,6 +8,8 @@ use axum_extra::extract::Multipart;
 use crate::adapters::http::errors::HttpError;
 use crate::application::errors::FileError;
 
+pub const MAX_IMAGE_SIZE_BYTES: usize = 10_000_000;
+
 pub struct ImageFile(pub Vec<u8>);
 
 #[async_trait]
@@ -42,9 +44,9 @@ where
                     .await
                     .map_err(|_| HttpError(AppError::File(FileError::FileReadError)))?;
 
-                if bytes.len() > 2_000_000 {
+                if bytes.len() > MAX_IMAGE_SIZE_BYTES {
                     return Err(HttpError(AppError::File(FileError::FileTooLarge {
-                        max_size: 2_000_000,
+                        max_size: MAX_IMAGE_SIZE_BYTES,
                     })));
                 }
 
