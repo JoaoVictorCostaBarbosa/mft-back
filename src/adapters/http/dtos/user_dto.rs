@@ -47,7 +47,6 @@ pub struct VerifyRequestDTO {
 pub struct UpdateUserDTO {
     pub id: Option<Uuid>,
     pub name: Option<String>,
-    pub code: i32,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]

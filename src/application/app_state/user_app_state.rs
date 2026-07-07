@@ -63,10 +63,7 @@ impl UserAppState {
             )),
             update_avatar: Arc::new(UpdateAvatar::new(user_repo.clone(), file_storage.clone())),
             update_goal: Arc::new(UpdateGoal::new(user_repo.clone())),
-            update_user: Arc::new(UpdateUser::new(
-                user_repo.clone(),
-                pending_change_repo.clone(),
-            )),
+            update_user: Arc::new(UpdateUser::new(user_repo.clone())),
             soft_delete_user: Arc::new(SoftDeleteUser::new(user_repo.clone())),
             restore_user: Arc::new(RestoreUser::new(user_repo.clone())),
             delete_user: Arc::new(DeleteUser::new(user_repo.clone())),

@@ -60,7 +60,6 @@ impl UserMappers {
         UpdateUserRequest {
             id: request.id,
             name: request.name,
-            code: request.code as u32,
         }
     }
 
